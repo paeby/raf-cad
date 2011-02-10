@@ -23,6 +23,7 @@ import core.impl.registers.CASRegsiterImpl;
 public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 	private final ExecutorService executor;
 
+	final AtomicInteger startedTasks = new AtomicInteger();
 	private final Map<Long, Integer> pids = new HashMap<Long, Integer>();
 	private final Map<Integer, CASRegister> registers = new TreeMap<Integer, CASRegister>();
 	
@@ -77,6 +78,8 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 
 	@Override
 	public void taskStarted() {
+		startedTasks.incrementAndGet();
+
 		synchronized (this) {
 			Thread cur = Thread.currentThread();
 			if (!monitors.containsKey(cur.getId())) {
@@ -193,12 +196,14 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 	}
 
 	public void printFinalState() {
-		System.out.print("Final values :");
-		for(CASRegister reg : registers.values())
-			System.out.print("\t"+reg);
-		System.out.println();
-		for(String l : log) 
-			System.out.println("\t" + l);
+		synchronized (this) {
+			System.out.print("Final values :");
+			for(CASRegister reg : registers.values())
+				System.out.print("\t"+reg);
+			System.out.println();
+			for(String l : log) 
+				System.out.println("\t" + l);
+		}
 	}
 	
 	public boolean equalFinalState(ConcurrentTestSystemImpl other) {
@@ -218,4 +223,14 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 		}
 	}
 	
+	
+	public int getStartedTasks() {
+		return startedTasks.get();
+	}
+	
+	public int getSteps() {
+		synchronized (this) {
+			return log.size();
+		}
+	}
 }
