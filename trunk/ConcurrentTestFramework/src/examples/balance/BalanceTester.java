@@ -74,7 +74,7 @@ public class BalanceTester {
 	
 	
 	public static void main(String[] args) {
-//		ConcurrentTester.testTasks(new Add(5), new Add(7), new Remove(11));
+		ConcurrentTester.testTasks(new Add(5), new Add(7), new Remove(11));
 		
 		ConcurrentTester.testTasks(new AddSafe(5), new AddSafe(7), new AddSafe(-11));
 

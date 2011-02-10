@@ -15,7 +15,13 @@ public class ConcurrentTester {
 		
 		ConcurrentTestSystemImpl first = runSingle(executor, tasks);
 		
-		for(int i = 0;i < 10000;i++) {
+		long sumTasks = 0;
+		long sumSteps = 0;
+		
+		int n = 2000;
+		
+		for(int i = 0;i < n;i++) {
+			System.gc();
 			ConcurrentTestSystemImpl system = runSingle(executor, tasks);
 			if (!system.equalFinalState(first)) {
 				System.out.println("Different final state found");
@@ -25,8 +31,11 @@ public class ConcurrentTester {
 				first.printFinalState();
 				return false;
 			}
+			sumTasks += system.getStartedTasks();
+			sumSteps += system.getSteps();
 		}
-		System.out.println("test passed");
+		System.out.println("Test passed");
+		System.out.println("Average steps : " + (((double)sumSteps)/n) + ", average tasks " + (((double)sumTasks)/n));
 		return true;
 	}
 
