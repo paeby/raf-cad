@@ -197,6 +197,13 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 				startTaskConcurrently(task);
 		}
 
+		waitToFinish();
+		
+//		printFinalState();
+	}
+
+	@Override
+	public void waitToFinish() {
 		synchronized (finished) {
 			while (!finished.get()) {
 				try {
@@ -206,8 +213,6 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 				}
 			}
 		}
-		
-//		printFinalState();
 	}
 
 	public void printFinalState() {
