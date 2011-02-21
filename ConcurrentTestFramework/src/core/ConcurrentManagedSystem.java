@@ -11,4 +11,6 @@ public interface ConcurrentManagedSystem extends ConcurrentSystem {
 	void actionCalled();
 
 	void addLogLine(String line);
+
+	void waitToFinish();
 }
