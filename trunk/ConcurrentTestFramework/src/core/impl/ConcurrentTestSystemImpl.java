@@ -31,6 +31,8 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 	final AtomicInteger activeTasks = new AtomicInteger();
 	final AtomicReference<Object> current = new AtomicReference<Object>();
 	
+	final AtomicBoolean transactionActive = new AtomicBoolean();
+	
 	final AtomicBoolean finished = new AtomicBoolean();
 	final long seed;
 	final Random rand;
@@ -91,7 +93,7 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 			else throw new IllegalStateException();
 		}
 		
-		actionCalled();
+		waitForAction();
 	}
 
 	@Override
@@ -111,8 +113,21 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 	@Override
 	public void actionCalled() {
 		Object monitor = getMonitor();
-		current.compareAndSet(monitor, null);
 		
+		if (transactionActive.get()) {
+			if (current.get() != monitor)
+				throw new IllegalStateException();
+		}
+		else {
+			if (!current.compareAndSet(monitor, null))
+				throw new IllegalStateException();
+		
+			waitForAction();
+		}
+	}
+
+	private void waitForAction() {
+		Object monitor = getMonitor();
 		int active = activeTasks.decrementAndGet();
 		if (active == 0)
 			awakeNext();
@@ -223,6 +238,17 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 		}
 	}
 	
+	@Override
+	public void transactionStarted() {
+		if (!transactionActive.compareAndSet(false, true))
+			throw new IllegalStateException();
+	}
+	
+	@Override
+	public void transactionEnded() {
+		if (!transactionActive.compareAndSet(true, false))
+			throw new IllegalStateException();
+	}
 	
 	public int getStartedTasks() {
 		return startedTasks.get();
