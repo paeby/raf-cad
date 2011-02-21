@@ -22,6 +22,22 @@ public class CounterTester {
 		}
 	}
 	
+	private static final class CounterTransaction implements Counter {
+		@Override
+		public void inc(ConcurrentSystem system, ProcessInfo callerInfo) {
+			Register reg = system.getRegister(0);
+			system.transactionStarted();
+			reg.write(reg.read()+1);
+			system.transactionEnded();
+		}
+
+		@Override
+		public int getValue(ConcurrentSystem system, ProcessInfo callerInfo) {
+			Register reg = system.getRegister(0);
+			return reg.read();
+		}
+	}
+	
 	private static final class CounterCorrect implements Counter {
 		@Override
 		public void inc(ConcurrentSystem system, ProcessInfo callerInfo) {
@@ -50,7 +66,12 @@ public class CounterTester {
 	}
 	
 	public static void main(String[] args) {
+		System.out.println("Naive:");
+		testCounter(new CounterNaive());
+		System.out.println("Correct:");
 		testCounter(new CounterCorrect());
+		System.out.println("Transaction:");
+		testCounter(new CounterTransaction());
 	}
 
 }
