@@ -14,7 +14,7 @@ public class BalanceTester {
 		public Add(int inc) {
 			this.inc = inc;
 		}
-
+		
 		@Override
 		public void execute(ConcurrentSystem system) {
 			Register balance = system.getRegister(0);
@@ -23,8 +23,8 @@ public class BalanceTester {
 		}
 		
 		@Override
-		public String toString() {		
-			return getClass().getSimpleName() + "[" + inc +"]" ;
+		public String toString() {
+			return getClass().getSimpleName() + "[" + inc + "]";
 		}
 	}
 	
@@ -39,15 +39,14 @@ public class BalanceTester {
 		public void execute(ConcurrentSystem system) {
 			Register balance = system.getRegister(0);
 			int cur = balance.read();
-			balance.write(cur - dec);			
-		}		
+			balance.write(cur - dec);
+		}
 		
 		@Override
-		public String toString() {		
-			return getClass().getSimpleName() + "[" + dec +"]" ;
+		public String toString() {
+			return getClass().getSimpleName() + "[" + dec + "]";
 		}
 	}
-	
 	
 	public static class AddSafe implements Task {
 		private final int inc;
@@ -55,28 +54,28 @@ public class BalanceTester {
 		public AddSafe(int inc) {
 			this.inc = inc;
 		}
-
+		
 		@Override
 		public void execute(ConcurrentSystem system) {
 			CASRegister balance = system.getCASRegister(0);
 			while (true) {
 				int cur = balance.read();
-				if (balance.compareAndSet(cur, cur+inc))
+				if (balance.compareAndSet(cur, cur + inc))
 					return;
 			}
 		}
 		
 		@Override
-		public String toString() {		
-			return getClass().getSimpleName() + "[" + inc +"]" ;
+		public String toString() {
+			return getClass().getSimpleName() + "[" + inc + "]";
 		}
 	}
 	
-	
 	public static void main(String[] args) {
+		System.out.println(" *** Unsafe add task test *** ");
 		ConcurrentTester.testTasks(new Add(5), new Add(7), new Remove(11));
 		
+		System.out.println(" *** Safe add task test *** ");
 		ConcurrentTester.testTasks(new AddSafe(5), new AddSafe(7), new AddSafe(-11));
-
 	}
 }
