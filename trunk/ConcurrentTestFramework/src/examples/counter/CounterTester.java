@@ -7,14 +7,14 @@ import common.registers.Register;
 import core.impl.problem.ProblemTester;
 
 public class CounterTester {
-
+	
 	private static final class CounterNaive implements Counter {
 		@Override
 		public void inc(ConcurrentSystem system, ProcessInfo callerInfo) {
 			Register reg = system.getRegister(0);
-			reg.write(reg.read()+1);
+			reg.write(reg.read() + 1);
 		}
-
+		
 		@Override
 		public int getValue(ConcurrentSystem system, ProcessInfo callerInfo) {
 			Register reg = system.getRegister(0);
@@ -27,10 +27,10 @@ public class CounterTester {
 		public void inc(ConcurrentSystem system, ProcessInfo callerInfo) {
 			Register reg = system.getRegister(0);
 			system.transactionStarted();
-			reg.write(reg.read()+1);
+			reg.write(reg.read() + 1);
 			system.transactionEnded();
 		}
-
+		
 		@Override
 		public int getValue(ConcurrentSystem system, ProcessInfo callerInfo) {
 			Register reg = system.getRegister(0);
@@ -42,25 +42,25 @@ public class CounterTester {
 		@Override
 		public void inc(ConcurrentSystem system, ProcessInfo callerInfo) {
 			Register reg = system.getRegister(callerInfo.getCurrentId());
-			reg.write(reg.read()+1);
+			reg.write(reg.read() + 1);
 		}
-
+		
 		@Override
 		public int getValue(ConcurrentSystem system, ProcessInfo callerInfo) {
 			int sum = 0;
-			for(int i =0 ;i<callerInfo.getTotalProcesses();i++) {
+			for (int i = 0; i < callerInfo.getTotalProcesses(); i++) {
 				Register reg = system.getRegister(i);
 				sum += reg.read();
 			}
 			return sum;
 		}
 	}
-
+	
 	public static void testCounter(Counter counter) {
-		int[][] counts = new int[][] {{1, 1}, {2, 1, 1}, {3, 2, 3, 1}};
-		int[] times = new int[] {100,200,1000};
+		int[][] counts = new int[][] { { 1, 1 }, { 2, 1, 1 }, { 3, 2, 3, 1 } };
+		int[] times = new int[] { 100, 200, 1000 };
 		
-		for(int i = 0;i<counts.length;i++)
+		for (int i = 0; i < counts.length; i++)
 			if (!ProblemTester.testProblem(new CounterProblemInstance(counts[i]), counter, times[i]))
 				return;
 	}
@@ -73,5 +73,5 @@ public class CounterTester {
 		System.out.println("Transaction:");
 		testCounter(new CounterTransaction());
 	}
-
+	
 }
