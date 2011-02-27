@@ -58,13 +58,23 @@ public class SnapshotProblemInstance implements ProblemInstance<Snapshot> {
 						}
 					} else {
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " calling updateValue(" + positionOfNextWrite + ", 0)");
+						timeBeforeWrite = System.currentTimeMillis();
 						snapshot.updateValue(positionOfNextWrite--, 0, system, callerInfo);
+						now = System.currentTimeMillis();
+						ttw = maximalTimeToWrite.get();
+						while (now - timeBeforeWrite > ttw) {
+							if (!maximalTimeToWrite.compareAndSet(ttw, now - timeBeforeWrite))
+								ttw = maximalTimeToWrite.get();
+						}
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " updateValue finished");
 						if (positionOfNextWrite < 0) {
 							positionOfNextWrite = 0;
 							writeOnes = true;
 						}
 					}
+
+					for (int i = managedSystem.getRandom().nextInt(2 * arrayLength); i > 0; i--)
+						managedSystem.yield();
 				}
 			}
 		});

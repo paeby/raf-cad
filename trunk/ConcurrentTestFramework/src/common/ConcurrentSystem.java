@@ -9,6 +9,7 @@ public interface ConcurrentSystem {
 	CASRegister getCASRegister(int index);
 	void startTaskConcurrently(Task task);
 	int getPID();
+	void yield();
 
 	void transactionStarted();
 	void transactionEnded();
