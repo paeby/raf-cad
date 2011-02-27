@@ -31,7 +31,7 @@ public class MutexTester {
 	}
 	
 	public static void testMutex(Mutex mutex) {
-		ProblemTester.testProblem(new MutexProblemInstance(), mutex, 30);
+		ProblemTester.testProblem(new MutexProblemInstance(), mutex, 100);
 	}
 	
 	public static void main(String[] args) {
