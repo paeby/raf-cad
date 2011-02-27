@@ -35,8 +35,8 @@ public class MutexTester {
 	}
 	
 	public static void main(String[] args) {
-//		System.out.println("Naive:");
-//		testMutex(new MutexNaive());
+		System.out.println("Naive:");
+		testMutex(new MutexNaive());
 		System.out.println("Correct:");
 		testMutex(new MutexCorrect());
 	}
