@@ -72,8 +72,8 @@ public class SnapshotProblemInstance implements ProblemInstance<Snapshot> {
 							writeOnes = true;
 						}
 					}
-
-					for (int i = managedSystem.getRandom().nextInt(2 * arrayLength); i > 0; i--)
+					
+					for (int i = managedSystem.getRandom().nextInt(3 * arrayLength / 2); i > 0; i--)
 						managedSystem.yield();
 				}
 			}
