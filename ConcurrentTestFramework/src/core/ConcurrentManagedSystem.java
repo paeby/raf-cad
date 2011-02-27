@@ -1,5 +1,7 @@
 package core;
 
+import java.util.Random;
+
 import common.ConcurrentSystem;
 
 public interface ConcurrentManagedSystem extends ConcurrentSystem {
@@ -13,4 +15,6 @@ public interface ConcurrentManagedSystem extends ConcurrentSystem {
 	void addLogLine(String line);
 
 	void waitToFinish();
+	
+	Random getRandom();
 }

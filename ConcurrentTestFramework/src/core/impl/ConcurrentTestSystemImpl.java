@@ -264,4 +264,14 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 			return log.size();
 		}
 	}
+	
+	@Override
+	public Random getRandom() {
+		return rand;
+	}
+	
+	@Override
+	public void yield() {
+		actionCalled();
+	}
 }
