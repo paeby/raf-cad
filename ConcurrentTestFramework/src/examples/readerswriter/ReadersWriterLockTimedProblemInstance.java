@@ -12,12 +12,12 @@ import common.tasks.Task;
 
 import core.ConcurrentManagedSystem;
 
-public class ReadersWriterLockProblemInstance implements ProblemInstance<ReadersWriterLock> {
+public class ReadersWriterLockTimedProblemInstance implements ProblemInstance<ReadersWriterLock> {
 	
 	final long testLengthInMilis;
 	final int readerCount, writerCount;
 	
-	public ReadersWriterLockProblemInstance(long testLengthInMilis, int readerCount, int writerCount) {
+	public ReadersWriterLockTimedProblemInstance(long testLengthInMilis, int readerCount, int writerCount) {
 		super();
 		this.testLengthInMilis = testLengthInMilis;
 		this.readerCount = readerCount;
