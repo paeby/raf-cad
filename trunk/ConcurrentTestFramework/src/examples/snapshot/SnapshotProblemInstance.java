@@ -1,5 +1,6 @@
 package examples.snapshot;
 
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -30,6 +31,8 @@ public class SnapshotProblemInstance implements ProblemInstance<Snapshot> {
 		final AtomicBoolean correct = new AtomicBoolean(true);
 		final AtomicLong maximalTimeToRead = new AtomicLong(0);
 		final AtomicLong maximalTimeToWrite = new AtomicLong(0);
+		
+		final Random rand = new Random(991);
 		
 		// atomicity test
 		managedSystem.startTaskConcurrently(new Task() {
@@ -73,7 +76,7 @@ public class SnapshotProblemInstance implements ProblemInstance<Snapshot> {
 						}
 					}
 					
-					for (int i = managedSystem.getRandom().nextInt(3 * arrayLength / 2); i > 0; i--)
+					for (int i = rand.nextInt(3 * arrayLength / 2); i > 0; i--)
 						managedSystem.yield();
 				}
 			}
