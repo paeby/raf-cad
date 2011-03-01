@@ -28,7 +28,7 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 	private final Map<Integer, CASRegister> registers = new TreeMap<Integer, CASRegister>();
 	
 	private final Map<Long, Object> monitors = new LinkedHashMap<Long, Object>();
-	final AtomicInteger activeTasks = new AtomicInteger();
+	final AtomicInteger activeTasks = new AtomicInteger(1);
 	final AtomicReference<Object> current = new AtomicReference<Object>();
 	
 	final AtomicBoolean transactionActive = new AtomicBoolean();
@@ -197,13 +197,17 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 				startTaskConcurrently(task);
 		}
 
-		waitToFinish();
+		startSimAndWaitToFinish();
 		
 //		printFinalState();
 	}
 
 	@Override
-	public void waitToFinish() {
+	public void startSimAndWaitToFinish() {
+		int active = activeTasks.decrementAndGet();
+		if (active == 0)
+			awakeNext();
+		
 		synchronized (finished) {
 			while (!finished.get()) {
 				try {

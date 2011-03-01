@@ -12,7 +12,7 @@ public interface ConcurrentManagedSystem extends ConcurrentSystem {
 
 	void addLogLine(String line);
 
-	void waitToFinish();
+	void startSimAndWaitToFinish();
 	
 //	Random getRandom();
 }

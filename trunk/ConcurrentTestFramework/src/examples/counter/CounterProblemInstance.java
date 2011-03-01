@@ -52,7 +52,7 @@ public class CounterProblemInstance implements ProblemInstance<Counter> {
 			});
 		}
 		
-		managedSystem.waitToFinish();
+		managedSystem.startSimAndWaitToFinish();
 		return correct.get();
 	}
 	
