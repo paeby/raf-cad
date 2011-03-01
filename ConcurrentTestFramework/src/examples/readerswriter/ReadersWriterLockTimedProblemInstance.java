@@ -109,7 +109,7 @@ public class ReadersWriterLockTimedProblemInstance implements ProblemInstance<Re
 			});
 		}
 		
-		managedSystem.waitToFinish();
+		managedSystem.startSimAndWaitToFinish();
 		if (correct.get() && timesWriteWait.get() > 0 && timesReadWait.get() > 0) {
 //			long writePercentage = totalWriteWait.get() * 100 / (writerCount * testLengthInMilis);
 //			long readPercentage = totalReadWait.get() * 100 / (readerCount * testLengthInMilis);

@@ -114,7 +114,7 @@ public class SnapshotProblemInstance implements ProblemInstance<Snapshot> {
 			});
 		}
 		
-		managedSystem.waitToFinish();
+		managedSystem.startSimAndWaitToFinish();
 		System.out.println("Maximal time to write: " + maximalTimeToWrite.get() + " ms");
 		System.out.println("Maximal time to read: " + maximalTimeToRead.get() + " ms");
 		return correct.get();

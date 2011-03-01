@@ -47,7 +47,7 @@ public class MutexProblemInstance implements ProblemInstance<Mutex> {
 			});
 		}
 		
-		managedSystem.waitToFinish();
+		managedSystem.startSimAndWaitToFinish();
 		return correct.get();
 	}
 	

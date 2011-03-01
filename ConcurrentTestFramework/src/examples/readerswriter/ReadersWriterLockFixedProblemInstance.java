@@ -111,7 +111,7 @@ public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<Re
 				}
 			});
 		}
-		managedSystem.waitToFinish();
+		managedSystem.startSimAndWaitToFinish();
 		return correct.get();
 	}
 
