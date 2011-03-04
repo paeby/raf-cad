@@ -11,18 +11,19 @@ import common.tasks.Task;
 
 import core.ConcurrentManagedSystem;
 
-public class SnapshotProblemInstance implements ProblemInstance<Snapshot> {
+public class SnapshotTimedProblemInstance implements ProblemInstance<Snapshot> {
 	
+	private final int arrayLength;
+
 	private final long testLengthInMiliseconds;
 	
-	public SnapshotProblemInstance(long testLengthInMiliseconds) {
-		super();
+	public SnapshotTimedProblemInstance(int arrayLength, long testLengthInMiliseconds) {
+		this.arrayLength = arrayLength;
 		this.testLengthInMiliseconds = testLengthInMiliseconds;
 	}
 	
 	@Override
 	public boolean execute(final ConcurrentManagedSystem managedSystem, final Snapshot snapshot) {
-		final int arrayLength = snapshot.getArrayLength();
 		if (arrayLength < 2) {
 			System.out.println("Array length cannot be less than 2");
 			return false;
@@ -47,7 +48,7 @@ public class SnapshotProblemInstance implements ProblemInstance<Snapshot> {
 					if (writeOnes) {
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " calling updateValue(" + positionOfNextWrite + ", 1)");
 						timeBeforeWrite = System.currentTimeMillis();
-						snapshot.updateValue(positionOfNextWrite++, 1, system, callerInfo);
+						snapshot.updateValue(positionOfNextWrite++, (byte)1, arrayLength, system, callerInfo);
 						now = System.currentTimeMillis();
 						ttw = maximalTimeToWrite.get();
 						while (now - timeBeforeWrite > ttw) {
@@ -62,7 +63,7 @@ public class SnapshotProblemInstance implements ProblemInstance<Snapshot> {
 					} else {
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " calling updateValue(" + positionOfNextWrite + ", 0)");
 						timeBeforeWrite = System.currentTimeMillis();
-						snapshot.updateValue(positionOfNextWrite--, 0, system, callerInfo);
+						snapshot.updateValue(positionOfNextWrite--, (byte)0, arrayLength, system, callerInfo);
 						now = System.currentTimeMillis();
 						ttw = maximalTimeToWrite.get();
 						while (now - timeBeforeWrite > ttw) {
@@ -92,7 +93,7 @@ public class SnapshotProblemInstance implements ProblemInstance<Snapshot> {
 					while (correct.get() && System.currentTimeMillis() < startingTime + testLengthInMiliseconds) {
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " calling getAllValues");
 						timeBeforeRead = System.currentTimeMillis();
-						int[] values = snapshot.getAllValues(managedSystem, callerInfo);
+						int[] values = snapshot.getAllValues(arrayLength, managedSystem, callerInfo);
 						now = System.currentTimeMillis();
 						ttr = maximalTimeToRead.get();
 						while (now - timeBeforeRead > ttr) {
