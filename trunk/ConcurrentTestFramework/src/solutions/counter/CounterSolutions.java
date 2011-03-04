@@ -2,6 +2,7 @@ package solutions.counter;
 
 import common.ConcurrentSystem;
 import common.ProcessInfo;
+import common.registers.CASRegister;
 import common.registers.Register;
 
 import examples.counter.Counter;
@@ -56,6 +57,26 @@ public class CounterSolutions {
 		}
 	}
 	
+	
+	
+	private static final class CounterCAS implements Counter {
+		@Override
+		public void inc(ConcurrentSystem system, ProcessInfo callerInfo) {
+			CASRegister reg = system.getCASRegister(0);
+			while (true) {
+				int value = reg.read();
+				if (reg.compareAndSet(value, value+1))
+					return;
+			}
+		}
+		
+		@Override
+		public int getValue(ConcurrentSystem system, ProcessInfo callerInfo) {
+			CASRegister reg = system.getCASRegister(0);
+			return reg.read();
+		}
+	}
+	
 	public static void main(String[] args) {
 		System.out.println("Naive:");
 		CounterTester.testCounter(new CounterNaive());
@@ -63,6 +84,8 @@ public class CounterSolutions {
 		CounterTester.testCounter(new CounterCorrect());
 		System.out.println("Transaction:");
 		CounterTester.testCounter(new CounterTransaction());
+		System.out.println("CAS:");
+		CounterTester.testCounter(new CounterCAS());
 	}
 	
 
