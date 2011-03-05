@@ -1,5 +1,6 @@
 package examples.snapshot;
 
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import common.ConcurrentSystem;
@@ -32,6 +33,8 @@ public class SnapshotFixedProblemInstance implements ProblemInstance<Snapshot> {
 	@Override
 	public boolean execute(final ConcurrentManagedSystem managedSystem, final Snapshot snapshot) {
 		final AtomicBoolean correct = new AtomicBoolean(true);
+		
+		final ArrayList<int[]> changes = new ArrayList<int[]>(); 
 		
 		// atomicity test
 		for (int i = 0;i<writers;i++) {

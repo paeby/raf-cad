@@ -115,9 +115,9 @@ public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<Re
 		return correct.get();
 	}
 
-
-
-
-
+	@Override
+	public String toString() {
+		return "RWProblemInstance[readers : " + readerSteps.length + ", writers : " + writerSteps.length + "]";
+	}
 
 }

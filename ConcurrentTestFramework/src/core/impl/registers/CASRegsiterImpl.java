@@ -3,6 +3,7 @@ package core.impl.registers;
 import common.registers.CASRegister;
 
 import core.ConcurrentManagedSystem;
+import core.impl.InstructionType;
 
 public class CASRegsiterImpl implements CASRegister {
 	final ConcurrentManagedSystem system;
@@ -16,8 +17,9 @@ public class CASRegsiterImpl implements CASRegister {
 	}
 
 	@Override
-	public int read() {
+	public int read() {		
 		system.actionCalled();
+		system.incStat(InstructionType.READ);
 		system.addLogLine("reg["+registerId+"].read() = " + value);
 		return value;
 	}
@@ -25,6 +27,7 @@ public class CASRegsiterImpl implements CASRegister {
 	@Override
 	public void write(int value) {
 		system.actionCalled();
+		system.incStat(InstructionType.WRITE);
 		system.addLogLine("reg["+registerId+"].write(" + value + ")"); 
 		this.value = value;
 	}
@@ -33,6 +36,7 @@ public class CASRegsiterImpl implements CASRegister {
 	public boolean compareAndSet(int expect, int update) {
 		system.actionCalled();
 		String details = "reg["+registerId+"]("+value+").cas(" + expect + ", " + update + ") = ";
+		system.incStat(InstructionType.CAS);
 		if (value == expect) {
 			system.addLogLine(details+"true"); 
 			value = update;
