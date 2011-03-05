@@ -152,7 +152,7 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 		synchronized (this) {
 			log.add("pid=" + getPID() + ":\t" + line);
 			
-			if (log.size() == 10000) {
+			if (log.size() == 100000) {
 				System.out.println("POSSIBLE ENDLESS LOOP");
 				printFinalState();
 				System.out.println("POSSIBLE ENDLESS LOOP");
