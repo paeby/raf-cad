@@ -1,5 +1,6 @@
 package examples.crossing;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
@@ -84,6 +85,15 @@ public class CrossingProblemInstance implements ProblemInstance<Crossing> {
 		managedSystem.startSimAndWaitToFinish();
 		return correct.get();
 	
+	}
+	
+	@Override
+	public String toString() {
+		int[] s = new int[trafficDesc.length];
+		for(int i = 0;i<s.length;i++)
+			s[i] = trafficDesc[i][0] * trafficDesc[i][1];
+		
+		return "CrossingProblemInstance[cars per direction : " + Arrays.toString(s) + "]";
 	}
 
 }

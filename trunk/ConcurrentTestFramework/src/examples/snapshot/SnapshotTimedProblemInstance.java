@@ -121,4 +121,8 @@ public class SnapshotTimedProblemInstance implements ProblemInstance<Snapshot> {
 		return correct.get();
 	}
 	
+	@Override
+	public String toString() {
+		return "SnapshotProblemInstance";
+	}
 }

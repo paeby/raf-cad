@@ -11,20 +11,31 @@ import common.tasks.Task;
 import core.ConcurrentManagedSystem;
 
 public class MutexProblemInstance implements ProblemInstance<Mutex> {
+	private final int processes;
+	private final int operations;
 	
+	
+	
+	public MutexProblemInstance(int processes, int operations) {
+		this.processes = processes;
+		this.operations = operations;
+	}
+
+
+
 	@Override
 	public boolean execute(final ConcurrentManagedSystem managedSystem, final Mutex solution) {
 		final AtomicBoolean correct = new AtomicBoolean(true);
 		final AtomicInteger counter = new AtomicInteger(0);
 		final AtomicInteger shouldBeCounter = new AtomicInteger(0);
 		
-		for (int processId = 0; processId < 5; processId++) {
-			final ProcessInfo callerInfo = new ProcessInfo(processId, 5);
+		for (int processId = 0; processId < processes; processId++) {
+			final ProcessInfo callerInfo = new ProcessInfo(processId, processes);
 			managedSystem.startTaskConcurrently(new Task() {
 				
 				@Override
 				public void execute(ConcurrentSystem system) {
-					for (int i = 0; correct.get() && i < 10; i++) {
+					for (int i = 0; correct.get() && i < operations; i++) {
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " aquiring lock");
 						solution.lock(system, callerInfo);
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " lock acquired");
@@ -42,6 +53,7 @@ public class MutexProblemInstance implements ProblemInstance<Mutex> {
 						
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " releasing lock");
 						solution.unlock(system, callerInfo);
+						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " lock realised");
 					}
 				}
 			});
@@ -51,4 +63,8 @@ public class MutexProblemInstance implements ProblemInstance<Mutex> {
 		return correct.get();
 	}
 	
+	@Override
+	public String toString() {
+		return "MutexProblemInstance[processes : " + processes + ", locks per process : " + operations + "]";
+	}
 }

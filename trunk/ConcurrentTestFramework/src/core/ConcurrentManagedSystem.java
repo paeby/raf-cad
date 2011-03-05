@@ -2,6 +2,8 @@ package core;
 
 import common.ConcurrentSystem;
 
+import core.impl.InstructionType;
+
 public interface ConcurrentManagedSystem extends ConcurrentSystem {
 
 	void taskStarted();
@@ -13,6 +15,8 @@ public interface ConcurrentManagedSystem extends ConcurrentSystem {
 	void addLogLine(String line);
 
 	void startSimAndWaitToFinish();
+
+	void incStat(InstructionType type);
 	
 //	Random getRandom();
 }

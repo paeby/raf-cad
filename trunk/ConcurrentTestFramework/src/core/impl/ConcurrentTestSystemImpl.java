@@ -5,14 +5,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import common.Utils;
 import common.registers.CASRegister;
 import common.registers.Register;
 import common.tasks.Task;
@@ -38,6 +39,7 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 	final Random rand;
 	
 	final ArrayList<String> log = new ArrayList<String>();
+	final Map<InstructionType, Integer> stats = new TreeMap<InstructionType, Integer>();
 	
 	public ConcurrentTestSystemImpl(ExecutorService executor) {
 		this.executor = executor;
@@ -149,6 +151,12 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 	public void addLogLine(String line) {
 		synchronized (this) {
 			log.add("pid=" + getPID() + ":\t" + line);
+			
+			if (log.size() == 10000) {
+				System.out.println("POSSIBLE ENDLESS LOOP");
+				printFinalState();
+				System.out.println("POSSIBLE ENDLESS LOOP");
+			}
 		}
 	}
 	
@@ -267,6 +275,15 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 		synchronized (this) {
 			return log.size();
 		}
+	}
+	
+	@Override
+	public void incStat(InstructionType type) {
+		Utils.increment(stats, type);
+	}
+
+	public Map<InstructionType, Integer> getStats() {
+		return stats;
 	}
 	
 //	@Override

@@ -1,5 +1,6 @@
 package examples.counter;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -56,4 +57,8 @@ public class CounterProblemInstance implements ProblemInstance<Counter> {
 		return correct.get();
 	}
 	
+	@Override
+	public String toString() {
+		return "CounterProblemInstance[increments by process : " + Arrays.toString(countIncrements) + "]";
+	}
 }

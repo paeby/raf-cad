@@ -17,11 +17,11 @@ public class ReadersWriterLockTester {
 		
 		
 		
-		System.out.println("2 writers, 20 readers");
-		if (!ProblemTester.testProblem(new ReadersWriterLockTimedProblemInstance(500, 20, 2), readersWriterLock, 5))
-			return;
-		System.out.println("\n20 writers, 2 readers");
-		ProblemTester.testProblem(new ReadersWriterLockTimedProblemInstance(500, 2, 20), readersWriterLock, 5);
+//		System.out.println("2 writers, 20 readers");
+//		if (!ProblemTester.testProblem(new ReadersWriterLockTimedProblemInstance(500, 20, 2), readersWriterLock, 5))
+//			return;
+//		System.out.println("\n20 writers, 2 readers");
+//		ProblemTester.testProblem(new ReadersWriterLockTimedProblemInstance(500, 2, 20), readersWriterLock, 5);
 	}
 	
 
