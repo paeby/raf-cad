@@ -6,9 +6,10 @@ import common.registers.CASRegister;
 import common.registers.Register;
 
 import examples.casn.CompareAndSet2;
+import examples.casn.CompareAndSet2Tester;
 
 public class CompareAndSet2Solutions {
-	final class CaS2Naive implements CompareAndSet2 {
+	final static class CaS2Naive implements CompareAndSet2 {
 		@Override
 		public int[] read(ConcurrentSystem system, ProcessInfo callerInfo) {
 			int[] values = new int[2];
@@ -39,7 +40,7 @@ public class CompareAndSet2Solutions {
 		
 	}
 	
-	final class CaS2Correct implements CompareAndSet2 {
+	final static class CaS2Correct implements CompareAndSet2 {
 		
 		@Override
 		public int[] read(ConcurrentSystem system, ProcessInfo callerInfo) {
@@ -88,7 +89,7 @@ public class CompareAndSet2Solutions {
 			system.getRegister(2 * freeSpaceIndex + 2).write(update1);
 			system.getRegister(2 * freeSpaceIndex + 3).write(update2);
 			
-			while (!indexRegister.compareAndSet(index, freeSpaceIndex)) {
+			while (!indexRegister.compareAndSet(index, freeSpaceIndex + 1)) {
 				// možda se index promenio, ali pokazuje na vrednosti koje
 				// zadovoljavaju ovaj poziv cas2?
 				index = indexRegister.read();
@@ -97,6 +98,12 @@ public class CompareAndSet2Solutions {
 			}
 			return true;
 		}
-		
+	}
+	
+	public static void main(String[] args) {
+		System.out.println("Naive:");
+		CompareAndSet2Tester.testCas2(new CaS2Naive());
+		System.out.println("Correct:");
+		CompareAndSet2Tester.testCas2(new CaS2Correct());
 	}
 }
