@@ -59,10 +59,17 @@ public class CounterSolutions {
 	
 	
 	
-	private static final class CounterCAS implements Counter {
+	public static class CounterCAS implements Counter {
+		final int registerIndex;
+		
+		public CounterCAS(int registerIndex) {
+			super();
+			this.registerIndex = registerIndex;
+		}
+
 		@Override
 		public void inc(ConcurrentSystem system, ProcessInfo callerInfo) {
-			CASRegister reg = system.getCASRegister(0);
+			CASRegister reg = system.getCASRegister(registerIndex);
 			while (true) {
 				int value = reg.read();
 				if (reg.compareAndSet(value, value+1))
@@ -72,7 +79,7 @@ public class CounterSolutions {
 		
 		@Override
 		public int getValue(ConcurrentSystem system, ProcessInfo callerInfo) {
-			CASRegister reg = system.getCASRegister(0);
+			CASRegister reg = system.getCASRegister(registerIndex);
 			return reg.read();
 		}
 	}
@@ -85,7 +92,7 @@ public class CounterSolutions {
 		System.out.println("Transaction:");
 		CounterTester.testCounter(new CounterTransaction());
 		System.out.println("CAS:");
-		CounterTester.testCounter(new CounterCAS());
+		CounterTester.testCounter(new CounterCAS(0));
 	}
 	
 

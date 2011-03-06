@@ -17,16 +17,23 @@ public class MutexSolutions {
 		public void unlock(ConcurrentSystem system, ProcessInfo info) {};
 	}
 	
-	private static final class MutexCorrect implements Mutex {
+	public static final class MutexCorrect implements Mutex {
+		final int registerIndex;
+
+		public MutexCorrect(int registerIndex) {
+			super();
+			this.registerIndex = registerIndex;
+		}
+
 		@Override
 		public void lock(ConcurrentSystem system, ProcessInfo info) {
-			CASRegister reg = system.getCASRegister(0);
+			CASRegister reg = system.getCASRegister(registerIndex);
 			while (!reg.compareAndSet(0, 1));
 		}
 		
 		@Override
 		public void unlock(ConcurrentSystem system, ProcessInfo info) {
-			CASRegister reg = system.getCASRegister(0);
+			CASRegister reg = system.getCASRegister(registerIndex);
 			reg.write(0);
 		};
 	}
@@ -75,7 +82,7 @@ public class MutexSolutions {
 		System.out.println("Naive:");
 		MutexTester.testMutex(new MutexNaive());
 		System.out.println("Correct:");
-		MutexTester.testMutex(new MutexCorrect());
+		MutexTester.testMutex(new MutexCorrect(0));
 		System.out.println("Read/write:");
 		MutexTester.testMutex(new MutexReadWrite());
 	}
