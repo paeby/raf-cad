@@ -59,8 +59,8 @@ public class CompareAndSet2Solutions {
 				freeSpaceIndex = freeSpaceIndexRegister.read();
 			} while (!freeSpaceIndexRegister.compareAndSet(freeSpaceIndex, freeSpaceIndex + 1));
 			
-			system.getRegister(2 * freeSpaceIndex).write(value1);
-			system.getRegister(2 * freeSpaceIndex + 1).write(value2);
+			system.getRegister(2 * freeSpaceIndex + 2).write(value1);
+			system.getRegister(2 * freeSpaceIndex + 3).write(value2);
 			
 			int index;
 			do {
@@ -85,8 +85,8 @@ public class CompareAndSet2Solutions {
 				freeSpaceIndex = freeSpaceIndexRegister.read();
 			} while (!freeSpaceIndexRegister.compareAndSet(freeSpaceIndex, freeSpaceIndex + 1));
 			
-			system.getRegister(2 * freeSpaceIndex).write(update1);
-			system.getRegister(2 * freeSpaceIndex + 1).write(update2);
+			system.getRegister(2 * freeSpaceIndex + 2).write(update1);
+			system.getRegister(2 * freeSpaceIndex + 3).write(update2);
 			
 			while (!indexRegister.compareAndSet(index, freeSpaceIndex)) {
 				// možda se index promenio, ali pokazuje na vrednosti koje
