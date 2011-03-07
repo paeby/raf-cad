@@ -1,6 +1,6 @@
 package solutions.addition;
 
-import solutions.consensus.ConsensusSolutoins.ConsensusWaitFree;
+import solutions.consensus.ConsensusSolutions.ConsensusWaitFree;
 import solutions.mutex.MutexSolutions.MutexCorrect;
 
 import common.ConcurrentSystem;
