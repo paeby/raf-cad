@@ -1,8 +1,8 @@
 package core.impl.problem;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,7 +23,7 @@ public class ProblemTester {
 	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, S solution, int n) {
 		ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("workers"));
 				
-		Map<InstructionType, Integer> stats = new HashMap<InstructionType, Integer>();
+		Map<InstructionType, Integer> stats = new TreeMap<InstructionType, Integer>();
 		long sumTasks = 0;
 		long sumSteps = 0;
 		
