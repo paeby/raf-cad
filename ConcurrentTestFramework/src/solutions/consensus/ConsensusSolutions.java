@@ -6,8 +6,24 @@ import common.registers.CASRegister;
 import common.registers.Register;
 
 import examples.consensus.Consensus;
+import examples.consensus.ConsensusTester;
 
 public class ConsensusSolutions {
+	
+	public static class ConsensusNaive implements Consensus {
+		@Override
+		public int propose(int value, ConcurrentSystem system,
+				ProcessInfo callerInfo) {
+			Register reg = system.getRegister(0);
+			int read = reg.read();
+			if (read != 0)
+				return read - 1;
+			else {
+				reg.write(value + 1);
+				return value;
+			}
+		}
+	}
 	
 	public static class ConsensusMutex implements Consensus {
 		@Override
@@ -98,6 +114,18 @@ public class ConsensusSolutions {
 			CASRegister reg = system.getCASRegister(registerIndex);
 			return reg.read() - 1;
 		}
+	}
+	
+	
+	public static void main(String[] args) {
+		System.out.println("Naive:");
+		ConsensusTester.testConsensus(new ConsensusNaive());
+		System.out.println("Mutex:");
+		ConsensusTester.testConsensus(new ConsensusMutex());
+		System.out.println("Wait-free:");
+		ConsensusTester.testConsensus(new ConsensusWaitFree(0));
+		System.out.println("Wait-free-perf:");
+		ConsensusTester.testConsensus(new ConsensusWaitFreePerformant(0));
 	}
 	
 }
