@@ -101,7 +101,7 @@ public class CompareAndSet2Solutions {
 			int index;
 			do {
 				index = indexRegister.read();
-			} while (!indexRegister.compareAndSet(index, freeSpaceIndex));
+			} while (!indexRegister.compareAndSet(index, freeSpaceIndex + 1));
 			
 		}
 		
