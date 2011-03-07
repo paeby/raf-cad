@@ -19,7 +19,7 @@ public class ConsensusSolutoins {
 		public int propose(int value, ConcurrentSystem system, ProcessInfo callerInfo) {
 			CASRegister reg = system.getCASRegister(registerIndex);
 			if (reg.compareAndSet(0, value+1)) 
-				return value+1;
+				return value;
 			else return reg.read()-1;
 			// +1 and -1 are only to allow values to be in [0,MAX_VALUE] interval, without them, it works only for proposing [1,MAX_VALUE]
 		}

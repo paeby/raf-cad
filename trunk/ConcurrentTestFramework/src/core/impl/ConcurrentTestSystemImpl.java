@@ -68,7 +68,8 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 	public int getPID() {
 		synchronized (this) {
 			Thread cur = Thread.currentThread();
-			return pids.get(cur.getId());
+			Integer a = pids.get(cur.getId());
+			return a!=null?a.intValue():-1;
 		}
 	}
 
@@ -152,7 +153,7 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 		synchronized (this) {
 			log.add("pid=" + getPID() + ":\t" + line);
 			
-			if (log.size() == 100000) {
+			if (log.size() == 200000) {
 				System.out.println("POSSIBLE ENDLESS LOOP");
 				printFinalState();
 				System.out.println("POSSIBLE ENDLESS LOOP");
