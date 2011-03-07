@@ -40,6 +40,41 @@ public class CompareAndSet2Solutions {
 		
 	}
 	
+	final static class CaS2Transaction implements CompareAndSet2 {
+		@Override
+		public boolean compareAndSet(int expected1, int expected2, int update1,
+				int update2, ConcurrentSystem system, ProcessInfo callerInfo) {
+			system.transactionStarted();
+			boolean succ = false;
+			if (system.getRegister(0).read()==expected1)
+				if (system.getCASRegister(1).compareAndSet(expected2, update2)) {
+					system.getRegister(0).write(update1);
+					succ = true;
+				}
+			
+			system.transactionEnded();
+			return succ;
+		}
+		
+		@Override
+		public int[] read(ConcurrentSystem system, ProcessInfo callerInfo) {
+			system.transactionStarted();
+			int v1 = system.getRegister(0).read();
+			int v2 = system.getRegister(1).read();
+			system.transactionEnded();
+			return new int[] {v1, v2};
+		}
+		
+		@Override
+		public void write(int value1, int value2, ConcurrentSystem system,
+				ProcessInfo callerInfo) {
+			system.transactionStarted();
+			system.getRegister(0).write(value1);
+			system.getRegister(1).write(value2);
+			system.transactionEnded();			
+		}
+	}
+	
 	final static class CaS2Correct implements CompareAndSet2 {
 		
 		@Override
@@ -103,6 +138,8 @@ public class CompareAndSet2Solutions {
 	public static void main(String[] args) {
 		System.out.println("Naive:");
 		CompareAndSet2Tester.testCas2(new CaS2Naive());
+		System.out.println("Transaction:");
+		CompareAndSet2Tester.testCas2(new CaS2Transaction());
 		System.out.println("Correct:");
 		CompareAndSet2Tester.testCas2(new CaS2Correct());
 	}

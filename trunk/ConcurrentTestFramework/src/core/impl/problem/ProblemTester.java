@@ -17,7 +17,7 @@ import core.impl.NamedThreadFactory;
 public class ProblemTester {
 
 	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, S solution) {
-		return testProblem(problem, solution, 2000);
+		return testProblem(problem, solution, 100);
 	}
 	
 	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, S solution, int n) {
