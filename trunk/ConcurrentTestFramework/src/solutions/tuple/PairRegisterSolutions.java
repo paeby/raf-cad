@@ -3,6 +3,7 @@ package solutions.tuple;
 import common.ConcurrentSystem;
 import common.ProcessInfo;
 import common.registers.CASRegister;
+import common.registers.Register;
 
 import examples.tuple.PairRegister;
 import examples.tuple.PairRegisterTester;
@@ -67,13 +68,66 @@ public class PairRegisterSolutions {
 			system.getRegister(2 * freeSpaceIndex + 2).write(value1);
 			system.getRegister(2 * freeSpaceIndex + 3).write(value2);
 			
-			int index;
-			do {
-				index = indexRegister.read();
-			} while (!indexRegister.compareAndSet(index, freeSpaceIndex + 1));
-			
+			indexRegister.write(freeSpaceIndex + 1);
+//			int index;
+//			do {
+//				index = indexRegister.read();
+//			} while (!indexRegister.compareAndSet(index, freeSpaceIndex + 1));
+		}		
+	}
+	
+	final static class PairRegisterWaitFree implements PairRegister {
+		
+		@Override
+		public int[] read(ConcurrentSystem system, ProcessInfo callerInfo) {
+			int index = system.getRegister(-1).read();
+			int[] value = new int[2];
+			value[0] = system.getRegister(index).read();
+			value[1] = system.getRegister(index + 1).read();
+			return value;
 		}
 		
+		@Override
+		public void write(int value1, int value2, ConcurrentSystem system, ProcessInfo callerInfo) {
+			Register indexRegister = system.getCASRegister(-1);
+			int freeSpaceIndex = callerInfo.getThreadLocal(0);
+			freeSpaceIndex++;
+			callerInfo.putThreadLocal(0, freeSpaceIndex + 1);
+			
+			int index = 2*callerInfo.getCurrentId() + (2*callerInfo.getTotalProcesses()) * freeSpaceIndex;
+			system.getRegister(index).write(value1);
+			system.getRegister(index+1).write(value2);
+			
+			indexRegister.write(index);
+		}		
+	}
+	
+	final static class PairRegisterLimitedMemory implements PairRegister {
+		
+		@Override
+		public int[] read(ConcurrentSystem system, ProcessInfo callerInfo) {
+			while (true) {
+				int index = system.getRegister(-1).read();
+				int[] value = new int[2];
+				value[0] = system.getRegister(index).read();
+				value[1] = system.getRegister(index + 1).read();
+				return value;
+			}			
+		}
+		
+		@Override
+		public void write(int value1, int value2, ConcurrentSystem system, ProcessInfo callerInfo) {
+			Register indexRegister = system.getCASRegister(-1);
+			int freeSpaceIndex = callerInfo.getThreadLocal(0);
+			freeSpaceIndex++;
+			callerInfo.putThreadLocal(0, freeSpaceIndex + 1);
+			
+			int index = 2*callerInfo.getCurrentId() + (2*callerInfo.getTotalProcesses()) * freeSpaceIndex;
+			system.getRegister(index).write(value1);
+			system.getRegister(index+1).write(value2);
+			
+			indexRegister.write(index);
+		}		
 	}
 	
 	public static void main(String[] args) {
@@ -83,5 +137,7 @@ public class PairRegisterSolutions {
 		PairRegisterTester.testPairRegister(new PairRegisterTransaction());
 		System.out.println("Correct:");
 		PairRegisterTester.testPairRegister(new PairRegisterCorrect());
+		System.out.println("Wait-free:");
+		PairRegisterTester.testPairRegister(new PairRegisterWaitFree());
 	}
 }
