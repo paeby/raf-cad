@@ -77,7 +77,7 @@ public class CompareAndSet2ProblemInstance implements ProblemInstance<CompareAnd
 							
 							toDo--;
 						}
-					} while (ok.get() && toDo > 0 && casResult);
+					} while (ok.get() && toDo > 0);
 				}
 			});
 		}
