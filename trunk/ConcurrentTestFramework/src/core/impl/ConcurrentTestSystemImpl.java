@@ -258,12 +258,15 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 	
 	@Override
 	public void transactionStarted() {
+		actionCalled();
+		addLogLine("transaction started");
 		if (!transactionActive.compareAndSet(false, true))
 			throw new IllegalStateException();
 	}
 	
 	@Override
 	public void transactionEnded() {
+		addLogLine("transaction ended");
 		if (!transactionActive.compareAndSet(true, false))
 			throw new IllegalStateException();
 	}
