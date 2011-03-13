@@ -14,10 +14,9 @@ import examples.addition.AdditionTester;
 public class AdditionSolutions {
 	public static class AdditionNaive implements Addition {
 		@Override
-		public int addAndGet(int toAdd, ConcurrentSystem system,
-				ProcessInfo callerInfo) {
+		public int addAndGet(int toAdd, ConcurrentSystem system, ProcessInfo callerInfo) {
 			CASRegister reg = system.getCASRegister(0);
-			int value = reg.read()+toAdd;
+			int value = reg.read() + toAdd;
 			reg.write(value);
 			return value;
 		}
@@ -30,12 +29,10 @@ public class AdditionSolutions {
 			return getValue(system, callerInfo);
 		}
 		
-		
 		public void add(int toAdd, ConcurrentSystem system, ProcessInfo callerInfo) {
 			Register reg = system.getRegister(callerInfo.getCurrentId());
 			reg.write(reg.read() + toAdd);
 		}
-		
 		
 		public int getValue(ConcurrentSystem system, ProcessInfo callerInfo) {
 			int sum = 0;
@@ -46,17 +43,17 @@ public class AdditionSolutions {
 			return sum;
 		}
 	}
-
+	
 	public static class AdditionMutex implements Addition {
 		@Override
 		public int addAndGet(int toAdd, ConcurrentSystem system, ProcessInfo callerInfo) {
 			MutexCorrect mutex = new MutexCorrect(1);
 			mutex.lock(system, callerInfo);
 			CASRegister reg = system.getCASRegister(0);
-			int value = reg.read()+toAdd;
+			int value = reg.read() + toAdd;
 			reg.write(value);
 			mutex.unlock(system, callerInfo);
-			return value;			
+			return value;
 		}
 	}
 	
@@ -74,8 +71,7 @@ public class AdditionSolutions {
 	
 	public static class AdditionWaitFree implements Addition {
 		@Override
-		public int addAndGet(int toAdd, ConcurrentSystem system,
-				ProcessInfo callerInfo) {
+		public int addAndGet(int toAdd, ConcurrentSystem system, ProcessInfo callerInfo) {
 			Register ourCounter = system.getRegister(callerInfo.getCurrentId());
 			int count = ourCounter.read();
 			count++;
@@ -85,34 +81,33 @@ public class AdditionSolutions {
 			
 			while (true) {
 				int consensusIndex = callerInfo.getThreadLocal(-1);
-				callerInfo.putThreadLocal(-1, consensusIndex+1);
+				callerInfo.putThreadLocal(-1, consensusIndex + 1);
 				
-				ConsensusWaitFree consensus = new ConsensusWaitFree( - consensusIndex - 1);
+				ConsensusWaitFree consensus = new ConsensusWaitFree(-consensusIndex - 1);
 				int agreed = consensus.get(system, callerInfo);
 				
 				if (agreed == -1) {
 					int proposal = 0;
-					for(int i = 0;i<callerInfo.getTotalProcesses();i++) {
+					for (int i = 0; i < callerInfo.getTotalProcesses(); i++) {
 						if (system.getRegister(i).read() > callerInfo.getThreadLocal(i))
-							proposal |= 1<<i;
+							proposal |= 1 << i;
 					}
-
+					
 					agreed = consensus.propose(proposal, system, callerInfo);
 				}
-						
+				
 				int curValue = callerInfo.getThreadLocal(-2);
 				int valueToReturn = Integer.MIN_VALUE;
-								
-				for(int i = 0;i<callerInfo.getTotalProcesses();i++) {
-					if ((agreed & (1<<i)) != 0) {
+				
+				for (int i = 0; i < callerInfo.getTotalProcesses(); i++) {
+					if ((agreed & (1 << i)) != 0) {
 						int where = callerInfo.getThreadLocal(i);
 						where++;
 						callerInfo.putThreadLocal(i, where);
-
+						
 						curValue += system.getRegister((where << 8) | i).read();
 						
-						if (i==callerInfo.getCurrentId())
-						{
+						if (i == callerInfo.getCurrentId()) {
 							valueToReturn = curValue;
 						}
 					}
@@ -125,12 +120,10 @@ public class AdditionSolutions {
 			}
 		}
 	}
-	
 	
 	public static class AdditionWaitFreePerformant implements Addition {
 		@Override
-		public int addAndGet(int toAdd, ConcurrentSystem system,
-				ProcessInfo callerInfo) {
+		public int addAndGet(int toAdd, ConcurrentSystem system, ProcessInfo callerInfo) {
 			Register ourCounter = system.getRegister(callerInfo.getCurrentId());
 			int count = ourCounter.read();
 			count++;
@@ -140,43 +133,42 @@ public class AdditionSolutions {
 			
 			while (true) {
 				int consensusIndex = callerInfo.getThreadLocal(-1);
-				callerInfo.putThreadLocal(-1, consensusIndex+1);
+				callerInfo.putThreadLocal(-1, consensusIndex + 1);
 				
-				ConsensusWaitFree consensus = new ConsensusWaitFree( - consensusIndex - 1);
+				ConsensusWaitFree consensus = new ConsensusWaitFree(-consensusIndex - 1);
 				int agreed = consensus.get(system, callerInfo);
 				
 				if (agreed == -1) {
 					int proposal = 0;
-					for(int i = 0;i<callerInfo.getTotalProcesses();i++) {
-						if (i!=callerInfo.getCurrentId()) {
+					for (int i = 0; i < callerInfo.getTotalProcesses(); i++) {
+						if (i != callerInfo.getCurrentId()) {
 							if (system.getRegister(i).read() > callerInfo.getThreadLocal(i))
-								proposal |= 1<<i;
-						}
-						else {
+								proposal |= 1 << i;
+						} else {
 							if (count > callerInfo.getThreadLocal(i))
-								proposal |= 1<<i;
-							else throw new IllegalStateException();
+								proposal |= 1 << i;
+							else
+								throw new IllegalStateException();
 						}
 					}
-
+					
 					agreed = consensus.propose(proposal, system, callerInfo);
 				}
-						
+				
 				int curValue = callerInfo.getThreadLocal(-2);
 				int valueToReturn = Integer.MIN_VALUE;
-								
-				for(int i = 0;i<callerInfo.getTotalProcesses();i++) {
-					if ((agreed & (1<<i)) != 0) {
+				
+				for (int i = 0; i < callerInfo.getTotalProcesses(); i++) {
+					if ((agreed & (1 << i)) != 0) {
 						int where = callerInfo.getThreadLocal(i);
 						where++;
 						callerInfo.putThreadLocal(i, where);
-
-						if (i==callerInfo.getCurrentId())
-						{
+						
+						if (i == callerInfo.getCurrentId()) {
 							curValue += toAdd;
 							valueToReturn = curValue;
-						}
-						else curValue += system.getRegister((where << 8) | i).read();
+						} else
+							curValue += system.getRegister((where << 8) | i).read();
 					}
 				}
 				
@@ -187,8 +179,6 @@ public class AdditionSolutions {
 			}
 		}
 	}
-	
-	
 	
 	public static void main(String[] args) {
 		System.out.println("Naive:");
