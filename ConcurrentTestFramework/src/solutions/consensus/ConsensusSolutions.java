@@ -1,5 +1,7 @@
 package solutions.consensus;
 
+import solutions.mutex.MutexSolutions.MutexCorrect;
+
 import common.ConcurrentSystem;
 import common.ProcessInfo;
 import common.registers.CASRegister;
@@ -7,6 +9,7 @@ import common.registers.Register;
 
 import examples.consensus.Consensus;
 import examples.consensus.ConsensusTester;
+import examples.mutex.Mutex;
 
 public class ConsensusSolutions {
 	
@@ -29,7 +32,7 @@ public class ConsensusSolutions {
 		@Override
 		public int propose(int value, ConcurrentSystem system, ProcessInfo callerInfo) {
 			Register register = system.getRegister(0);
-			Mutex mutex = new Mutex(-1);
+			Mutex mutex = new MutexCorrect(-1);
 			
 			mutex.lock(system, callerInfo);
 			
@@ -42,26 +45,6 @@ public class ConsensusSolutions {
 			mutex.unlock(system, callerInfo);
 			
 			return valueInReg - 1;
-		}
-		
-		private final static class Mutex {
-			final int registerIndex;
-			
-			public Mutex(int registerIndex) {
-				super();
-				this.registerIndex = registerIndex;
-			}
-			
-			public void lock(ConcurrentSystem system, ProcessInfo info) {
-				CASRegister reg = system.getCASRegister(registerIndex);
-				while (!reg.compareAndSet(0, 1))
-					;
-			}
-			
-			public void unlock(ConcurrentSystem system, ProcessInfo info) {
-				CASRegister reg = system.getCASRegister(registerIndex);
-				reg.write(0);
-			};
 		}
 	}
 	
