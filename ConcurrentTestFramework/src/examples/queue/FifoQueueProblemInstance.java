@@ -12,10 +12,12 @@ import core.ConcurrentManagedSystem;
 
 public class FifoQueueProblemInstance implements ProblemInstance<FifoQueue> {
 	private final int howManyOperations, howManyProcesses;
+	private final boolean addThenRemove;
 	
-	public FifoQueueProblemInstance(int processes, int operations) {
+	public FifoQueueProblemInstance(int processes, int operations, boolean addTheRemove) {
 		this.howManyProcesses = processes;
 		this.howManyOperations = operations;
+		this.addThenRemove = addTheRemove;
 	}
 	
 	@Override
@@ -25,6 +27,7 @@ public class FifoQueueProblemInstance implements ProblemInstance<FifoQueue> {
 		for (int i = 0; i < howManyProcesses; i++)
 			readersAreHere[i] = new AtomicInteger(-1);
 		final AtomicInteger totalCountOfReads = new AtomicInteger(0);
+		final AtomicInteger addingDone = new AtomicInteger(howManyProcesses);
 		
 		for (int threadIndex = 0; threadIndex < howManyProcesses; threadIndex++) {
 			final ProcessInfo callerInfo = new ProcessInfo(threadIndex, howManyProcesses * 2);
@@ -40,6 +43,7 @@ public class FifoQueueProblemInstance implements ProblemInstance<FifoQueue> {
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " value " + current + " added.");
 						current += howManyProcesses;
 					}
+					addingDone.decrementAndGet();
 				}
 			});
 		}
@@ -50,6 +54,9 @@ public class FifoQueueProblemInstance implements ProblemInstance<FifoQueue> {
 				
 				@Override
 				public void execute(ConcurrentSystem system) {
+					if (addThenRemove)
+						while (addingDone.get() != 0)
+							system.yield();
 					while (correct.get() && totalCountOfReads.get() < howManyProcesses * howManyOperations) {
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " removing value");
 						int value = solution.remove(managedSystem, callerInfo);

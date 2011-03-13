@@ -108,29 +108,45 @@ public class FifoQueueSolutions {
 			emptyLoc += 2;
 			
 			system.getRegister(emptyLoc).write(value);
-			system.getRegister(emptyLoc + 1).write(0);
 			
-			CASRegister elemPtr = system.getCASRegister(1);
-			int elem;
-			do {
-				elem = elemPtr.read();
-				while (elem > 0)
-					elemPtr = system.getCASRegister(elem + 1);
-			} while (!elemPtr.compareAndSet(0, emptyLoc));
+			fromTheTop: while (true) {
+				CASRegister elemPtr = system.getCASRegister(1);
+				int elem;
+				do {
+					while ((elem = elemPtr.read()) != 0) {
+						if (elem < 0)
+							continue fromTheTop;
+						elemPtr = system.getCASRegister(elem + 1);
+					}
+				} while (!elemPtr.compareAndSet(0, emptyLoc));
+				return;
+			}
 		}
 		
 		@Override
 		public int remove(ConcurrentSystem system, ProcessInfo callerInfo) {
-			CASRegister firstPtr = system.getCASRegister(1);
+			CASRegister firstPtr = system.getCASRegister(1), secNextPtr;
 			int first, second, value;
-			do {
+			fromTheTop: while (true) {
 				first = firstPtr.read();
 				if (first == 0)
 					return -1;
+				
 				value = system.getRegister(first).read();
-				second = system.getRegister(first + 1).read();
-			} while (!firstPtr.compareAndSet(first, second));
-			return value;
+				secNextPtr = system.getCASRegister(first + 1);
+				do {
+					second = secNextPtr.read();
+					if (second < 0) {
+						continue fromTheTop;
+					}
+				} while (!secNextPtr.compareAndSet(second, -second - 1));
+				
+				if (firstPtr.compareAndSet(first, second)) {
+					return value;
+				} else {
+					System.out.println("Aaaa");
+				}
+			}
 		}
 	}
 	
@@ -138,9 +154,14 @@ public class FifoQueueSolutions {
 	 * implementacija ConcurrentLinkedQueue
 	 * http://www.cs.rochester.edu/u/scott/papers/1996_PODC_queues.pdf
 	 * 
-	 * korisni adresni prostor počinje od 2 naviše izbacio sam count-ove jer
-	 * nema recikliranja memorije ptr ka praznom prostoru je na -1 Q->head je na
-	 * -2 Q->tail je na -3 umesto null koristimo 0
+	 * <ul>
+	 * <li>korisni adresni prostor počinje od 2 naviše</li>
+	 * <li>izbacio sam count-ove jer nema recikliranja memorije</li>
+	 * <li>ptr ka praznom prostoru je na -1</li>
+	 * <li>Q->head je na -2</li>
+	 * <li>Q->tail je na -3</li>
+	 * <li>umesto null koristimo 0</li>
+	 * </ul>
 	 * 
 	 * @author Bocete
 	 */
@@ -199,6 +220,6 @@ public class FifoQueueSolutions {
 	}
 	
 	public static void main(String[] args) {
-		FifoQueueTester.testFifoQueue(new TransactionFifoQueue());
+		FifoQueueTester.testFifoQueue(new LockFreeFifoQueue());
 	}
 }
