@@ -50,7 +50,7 @@ public class FifoQueueProblemInstance implements ProblemInstance<FifoQueue> {
 				
 				@Override
 				public void execute(ConcurrentSystem system) {
-					while (correct.get() && totalCountOfReads.get() < howManyProcesses*howManyOperations) {
+					while (correct.get() && totalCountOfReads.get() < howManyProcesses * howManyOperations) {
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " removing value");
 						int value = solution.remove(managedSystem, callerInfo);
 						if (value == -1) {
@@ -67,6 +67,11 @@ public class FifoQueueProblemInstance implements ProblemInstance<FifoQueue> {
 						} else {
 							oldValueFromThatModus.set(value);
 						}
+					}
+					int value = solution.remove(managedSystem, callerInfo);
+					if (value != -1) {
+						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " **** read value " + value + " read value that has not been inserted: " + value);
+						correct.set(false);
 					}
 				}
 			});
