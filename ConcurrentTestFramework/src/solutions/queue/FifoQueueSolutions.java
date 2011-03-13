@@ -5,6 +5,7 @@ import common.ProcessInfo;
 import common.registers.CASRegister;
 
 import examples.queue.FifoQueue;
+import examples.queue.FifoQueueTester;
 
 public class FifoQueueSolutions {
 	static final class DummyFifoQueue implements FifoQueue {
@@ -36,9 +37,8 @@ public class FifoQueueSolutions {
 				;
 			
 			int last = system.getRegister(-2).read();
-			last++;
-			system.getRegister(-2).write(last);
 			system.getRegister(last).write(value);
+			system.getRegister(-2).write(last + 1);
 			
 			lock.write(0);
 		}
@@ -66,30 +66,34 @@ public class FifoQueueSolutions {
 	static final class TransactionFifoQueue implements FifoQueue {
 		@Override
 		public void add(int value, ConcurrentSystem system, ProcessInfo callerInfo) {
-			system.transactionStarted();
-			
-			int last = system.getRegister(-1).read();
-			last++;
-			system.getRegister(-1).write(last);
-			system.getRegister(last).write(value);
-			
-			system.transactionEnded();
+			try {
+				system.transactionStarted();
+				
+				int last = system.getRegister(-1).read();
+				system.getRegister(last).write(value);
+				system.getRegister(-1).write(last + 1);
+			} finally {
+				system.transactionEnded();
+			}
 		}
 		
 		@Override
 		public int remove(ConcurrentSystem system, ProcessInfo callerInfo) {
-			system.transactionStarted();
-			
-			int first = system.getRegister(-2).read();
-			int last = system.getRegister(-1).read();
-			if (first == last) {
+			try {
+				system.transactionStarted();
+				
+				int first = system.getRegister(-2).read();
+				int last = system.getRegister(-1).read();
+				if (first == last) {
+					return -1;
+				}
+				int value = system.getRegister(first).read();
+				system.getRegister(-2).write(first + 1);
+				
+				return value;
+			} finally {
 				system.transactionEnded();
-				return -1;
 			}
-			int value = system.getRegister(first).read();
-			system.getRegister(-2).write(first + 1);
-			system.transactionEnded();
-			return value;
 		}
 	}
 	
@@ -134,12 +138,9 @@ public class FifoQueueSolutions {
 	 * implementacija ConcurrentLinkedQueue
 	 * http://www.cs.rochester.edu/u/scott/papers/1996_PODC_queues.pdf
 	 * 
-	 * korisni adresni prostor počinje od 2 naviše
-	 * izbacio sam count-ove jer nema recikliranja memorije
-	 * ptr ka praznom prostoru je na -1
-	 * Q->head je na -2
-	 * Q->tail je na -3
-	 * umesto null koristimo 0
+	 * korisni adresni prostor počinje od 2 naviše izbacio sam count-ove jer
+	 * nema recikliranja memorije ptr ka praznom prostoru je na -1 Q->head je na
+	 * -2 Q->tail je na -3 umesto null koristimo 0
 	 * 
 	 * @author Bocete
 	 */
@@ -163,7 +164,7 @@ public class FifoQueueSolutions {
 				next = system.getRegister(tail + 1).read();
 				if (tail == tailReg.read()) {
 					if (next == 0) {
-						if (system.getCASRegister(tail+1).compareAndSet(0, newLoc))
+						if (system.getCASRegister(tail + 1).compareAndSet(0, newLoc))
 							break;
 					} else {
 						tailReg.compareAndSet(tail, next);
@@ -195,5 +196,9 @@ public class FifoQueueSolutions {
 			}
 			return value;
 		}
+	}
+	
+	public static void main(String[] args) {
+		FifoQueueTester.testFifoQueue(new TransactionFifoQueue());
 	}
 }
