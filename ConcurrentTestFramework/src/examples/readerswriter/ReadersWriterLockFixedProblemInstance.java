@@ -28,6 +28,7 @@ public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<Re
 	public boolean execute(final ConcurrentManagedSystem managedSystem, final ReadersWriterLock solution) {
 		final AtomicBoolean correct = new AtomicBoolean(true);
 		
+		final AtomicInteger maxReaders = new AtomicInteger();
 		final AtomicInteger readersActive = new AtomicInteger();
 		final AtomicInteger writersActive = new AtomicInteger();
 		
@@ -43,7 +44,8 @@ public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<Re
 						solution.lockRead(system, callerInfo);
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " reader acquired lock");
 
-						readersActive.incrementAndGet();
+						int cur = readersActive.incrementAndGet();
+						maxReaders.set(Math.max(maxReaders.get(), cur));
 						if (writersActive.get()>0)
 							incorrect();
 						system.yield();
@@ -112,6 +114,7 @@ public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<Re
 			});
 		}
 		managedSystem.startSimAndWaitToFinish();
+		System.out.print(maxReaders);
 		return correct.get();
 	}
 
