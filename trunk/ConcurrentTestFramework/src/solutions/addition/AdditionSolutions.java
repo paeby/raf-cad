@@ -128,7 +128,7 @@ public class AdditionSolutions {
 			int count = ourCounter.read();
 			count++;
 			
-			system.getRegister((count << 8) | callerInfo.getCurrentId()).write(toAdd);
+			system.getRegister(count, callerInfo.getCurrentId()).write(toAdd);
 			ourCounter.write(count);
 			
 			while (true) {
@@ -168,7 +168,7 @@ public class AdditionSolutions {
 							curValue += toAdd;
 							valueToReturn = curValue;
 						} else
-							curValue += system.getRegister((where << 8) | i).read();
+							curValue += system.getRegister(where, i).read();
 					}
 				}
 				

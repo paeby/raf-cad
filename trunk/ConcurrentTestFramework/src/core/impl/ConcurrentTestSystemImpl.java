@@ -26,7 +26,7 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 
 	final AtomicInteger startedTasks = new AtomicInteger();
 	private final Map<Long, Integer> pids = new HashMap<Long, Integer>();
-	private final Map<Integer, CASRegister> registers = new TreeMap<Integer, CASRegister>();
+	private final Map<int[], CASRegister> registers = new TreeMap<int[], CASRegister>(new IntArrayComparator());
 	
 	private final Map<Long, Object> monitors = new LinkedHashMap<Long, Object>();
 	final AtomicInteger activeTasks = new AtomicInteger(1);
@@ -48,20 +48,20 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 	}
 	
 	@Override
-	public CASRegister getCASRegister(int index) {
+	public CASRegister getCASRegister(int... indexes) {
 		synchronized (this) {
-			CASRegister reg = registers.get(index);
+			CASRegister reg = registers.get(indexes);
 			if (reg == null) {
-				reg = new CASRegsiterImpl(this, index, 0);
-				registers.put(index, reg);
+				reg = new CASRegsiterImpl(this, indexes, 0);
+				registers.put(indexes, reg);
 			}
 			return reg;			
 		}
 	}
 
 	@Override
-	public Register getRegister(int index) {
-		return getCASRegister(index);
+	public Register getRegister(int... indexes) {
+		return getCASRegister(indexes);
 	}
 	
 	@Override
@@ -245,7 +245,7 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 				if (registers.size() != other.registers.size())
 					return false;
 				
-				for(Entry<Integer, CASRegister> entry : registers.entrySet()) {
+				for(Entry<int[], CASRegister> entry : registers.entrySet()) {
 					CASRegister otherReg = other.registers.get(entry.getKey());
 					if (!entry.getValue().equals(otherReg))
 						return false;

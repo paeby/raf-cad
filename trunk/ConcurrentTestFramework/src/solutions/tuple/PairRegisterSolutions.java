@@ -69,10 +69,6 @@ public class PairRegisterSolutions {
 			system.getRegister(2 * freeSpaceIndex + 3).write(value2);
 			
 			indexRegister.write(freeSpaceIndex + 1);
-//			int index;
-//			do {
-//				index = indexRegister.read();
-//			} while (!indexRegister.compareAndSet(index, freeSpaceIndex + 1));
 		}		
 	}
 	

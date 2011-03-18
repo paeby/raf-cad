@@ -1,5 +1,7 @@
 package core.impl.registers;
 
+import java.util.Arrays;
+
 import common.registers.CASRegister;
 
 import core.ConcurrentManagedSystem;
@@ -7,10 +9,10 @@ import core.impl.InstructionType;
 
 public class CASRegsiterImpl implements CASRegister {
 	final ConcurrentManagedSystem system;
-	final int registerId;
+	final int[] registerId;
 	int value;
 	
-	public CASRegsiterImpl(ConcurrentManagedSystem system, int registerId, int value) {
+	public CASRegsiterImpl(ConcurrentManagedSystem system, int[] registerId, int value) {
 		this.system = system;
 		this.registerId = registerId;
 		this.value = value;
@@ -51,14 +53,14 @@ public class CASRegsiterImpl implements CASRegister {
 	
 	@Override
 	public String toString() {	
-		return "reg["+registerId+"]="+Integer.toString(value);
+		return "reg" + Arrays.toString(registerId) + "=" + Integer.toString(value);
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + registerId;
+		result = prime * result + Arrays.hashCode(registerId);
 		result = prime * result + value;
 		return result;
 	}
@@ -72,7 +74,7 @@ public class CASRegsiterImpl implements CASRegister {
 		if (getClass() != obj.getClass())
 			return false;
 		CASRegsiterImpl other = (CASRegsiterImpl) obj;
-		if (registerId != other.registerId)
+		if (!Arrays.equals(registerId, other.registerId))
 			return false;
 		if (value != other.value)
 			return false;
