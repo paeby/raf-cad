@@ -1,8 +1,11 @@
 package solutions.queue;
 
+import solutions.consensus.ConsensusSolutions.ConsensusWaitFree;
+
 import common.ConcurrentSystem;
 import common.ProcessInfo;
 import common.registers.CASRegister;
+import common.registers.Register;
 
 import examples.queue.FifoQueue;
 import examples.queue.FifoQueueTester;
@@ -155,7 +158,7 @@ public class FifoQueueSolutions {
 	 * http://www.cs.rochester.edu/u/scott/papers/1996_PODC_queues.pdf
 	 * 
 	 * <ul>
-	 * <li>korisni adresni prostor počinje od 2 naviše</li>
+	 * <li>korisni adresni prostor poÄ�inje od 2 naviÅ¡e</li>
 	 * <li>izbacio sam count-ove jer nema recikliranja memorije</li>
 	 * <li>ptr ka praznom prostoru je na -1</li>
 	 * <li>Q->head je na -2</li>
@@ -166,7 +169,7 @@ public class FifoQueueSolutions {
 	 * @author Bocete
 	 */
 	
-	static final class WaitFreeFifoQueue implements FifoQueue {
+	static final class MaybeWaitFreeFifoQueue implements FifoQueue {
 		
 		@Override
 		public void add(int value, ConcurrentSystem system, ProcessInfo callerInfo) {
@@ -219,7 +222,102 @@ public class FifoQueueSolutions {
 		}
 	}
 	
+	public static class WaitFreeFifoQueue implements FifoQueue {
+		@Override
+		public void add(int value, ConcurrentSystem system, ProcessInfo callerInfo) {
+			executeAtomicaly(value, system, callerInfo);
+		}
+		
+		@Override
+		public int remove(ConcurrentSystem system, ProcessInfo callerInfo) {
+			return executeAtomicaly(-1, system, callerInfo);
+		}
+		
+		
+		private int executeAtomicaly(int action, ConcurrentSystem system, ProcessInfo callerInfo) {
+			Register ourCounter = system.getRegister(callerInfo.getCurrentId());
+			int count = ourCounter.read();
+			count++;
+			
+			system.getRegister(count, callerInfo.getCurrentId()).write(action);
+			ourCounter.write(count);
+			
+			while (true) {
+				int consensusIndex = callerInfo.getThreadLocal(-1);
+				callerInfo.putThreadLocal(-1, consensusIndex + 1);
+				
+				ConsensusWaitFree consensus = new ConsensusWaitFree(-consensusIndex - 1);
+				int agreed = consensus.get(system, callerInfo);
+				
+				if (agreed == -1) {
+					int proposal = 0;
+					for (int i = 0; i < callerInfo.getTotalProcesses(); i++) {
+						if (i != callerInfo.getCurrentId()) {
+							if (system.getRegister(i).read() > callerInfo.getThreadLocal(i))
+								proposal |= 1 << i;
+						} else {
+							if (count > callerInfo.getThreadLocal(i))
+								proposal |= 1 << i;
+							else
+								throw new IllegalStateException();
+						}
+					}
+					
+					agreed = consensus.propose(proposal, system, callerInfo);
+				}
+				
+				int curStart = callerInfo.getThreadLocal(-3);
+				int curEnd = callerInfo.getThreadLocal(-2);
+				int valueToReturn = Integer.MIN_VALUE;
+				
+				for (int i = 0; i < callerInfo.getTotalProcesses(); i++) {
+					if ((agreed & (1 << i)) != 0) {
+						int where = callerInfo.getThreadLocal(i);
+						where++;
+						callerInfo.putThreadLocal(i, where);
+						
+						if (i == callerInfo.getCurrentId()) {
+							if (action >= 0) {
+								callerInfo.putThreadLocal(new int[] {0, curEnd}, action);
+								curEnd++;
+								valueToReturn = -2;
+							}
+							else {
+								if (curEnd > curStart) {
+									valueToReturn = callerInfo.getThreadLocal(0, curStart);
+									curStart++;
+								}
+								else valueToReturn = -1;
+							}
+						} else {
+							int curAction = system.getRegister(where, i).read();
+							if (curAction >= 0) {
+								callerInfo.putThreadLocal(new int[] {0, curEnd}, curAction);
+								curEnd++;
+							} else {
+								if (curEnd > curStart) {
+									curStart++;
+								}
+							}
+						}
+					}
+				}
+
+				callerInfo.putThreadLocal(-3, curStart);
+				callerInfo.putThreadLocal(-2, curEnd);
+				
+				if (valueToReturn != Integer.MIN_VALUE)
+					return valueToReturn;
+			}
+		}
+	}
+	
 	public static void main(String[] args) {
+		FifoQueueTester.testFifoQueue(new DummyFifoQueue());
+		FifoQueueTester.testFifoQueue(new LockFifoQueue());
+		FifoQueueTester.testFifoQueue(new TransactionFifoQueue());
 		FifoQueueTester.testFifoQueue(new LockFreeFifoQueue());
+		FifoQueueTester.testFifoQueue(new MaybeWaitFreeFifoQueue());
+		FifoQueueTester.testFifoQueue(new WaitFreeFifoQueue());
 	}
 }
