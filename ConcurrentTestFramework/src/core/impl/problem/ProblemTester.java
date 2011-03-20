@@ -29,6 +29,7 @@ public class ProblemTester {
 		
 		for(int i = 0;i < n;i++) {
 			System.out.print(".");
+			System.out.flush();
 			System.gc();
 			
 			ConcurrentTestSystemImpl system = new ConcurrentTestSystemImpl(executor);

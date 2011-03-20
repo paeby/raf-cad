@@ -148,12 +148,14 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 		activeTasks.incrementAndGet();
 	}
 	
+	private static final int possibleLoopSize = 500000;
+	
 	@Override
 	public void addLogLine(String line) {
 		synchronized (this) {
 			log.add("pid=" + getPID() + ":\t" + line);
 			
-			if (log.size() == 500000) {
+			if (log.size() == possibleLoopSize) {
 				System.out.println("POSSIBLE ENDLESS LOOP");
 				printFinalState();
 				System.out.println("POSSIBLE ENDLESS LOOP");
@@ -234,8 +236,14 @@ public class ConcurrentTestSystemImpl implements ConcurrentManagedSystem {
 			for(CASRegister reg : registers.values())
 				System.out.print("\t"+reg);
 			System.out.println();
-			for(String l : log) 
-				System.out.println("\t" + l);
+			if (log.size() != possibleLoopSize) {
+				for(String l : log) 
+					System.out.println("\t" + l);
+			} else {
+				for (int i = 0;i<1000;i++)
+					System.out.println("\t" + log.get(i));
+				System.out.println("and more...");
+			}
 		}
 	}
 	
