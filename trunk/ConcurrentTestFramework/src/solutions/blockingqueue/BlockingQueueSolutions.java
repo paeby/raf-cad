@@ -63,17 +63,18 @@ public class BlockingQueueSolutions {
 				newNode.value.set(value);
 				
 				AtomicReference<Node> lastNodePtr;
+				Node lastNode = null;
 				fromTheTop: while (true) {
 					lastNodePtr = firstNodePtr;
+					lastNode = null;
 					do {
 						while (lastNodePtr.get() != null) {
-							if (lastNodePtr.get().isMarked.get()) {
-								Thread.yield();
-								continue fromTheTop;
-							}
-							lastNodePtr = lastNodePtr.get().nextNode;
+							lastNode = lastNodePtr.get();
+							lastNodePtr = lastNode.nextNode;
 						}
 					} while (!lastNodePtr.compareAndSet(null, newNode));
+					if (lastNode != null && lastNode.isMarked.get())
+						continue fromTheTop;
 					return;
 				}
 			} finally {
@@ -95,9 +96,7 @@ public class BlockingQueueSolutions {
 					else
 						synchronized (this) {
 							try {
-								System.out.println("Thread " + Thread.currentThread().getId() + " cheka");
 								wait();
-								System.out.println("Thread " + Thread.currentThread().getId() + " se budi");
 							} catch (InterruptedException e) {
 								throw new RuntimeException(e);
 							}
