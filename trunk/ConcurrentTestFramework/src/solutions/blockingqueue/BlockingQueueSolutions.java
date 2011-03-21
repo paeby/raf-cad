@@ -87,7 +87,6 @@ public class BlockingQueueSolutions {
 		@Override
 		public int remove() {
 			Node firstNode = null, secNode;
-			int value;
 			fromTheTop: while (true) {
 				while (firstNode == null) {
 					firstNode = this.firstNodePtr.get();
@@ -96,25 +95,30 @@ public class BlockingQueueSolutions {
 					else
 						synchronized (this) {
 							try {
+								System.out.println("Thread " + Thread.currentThread().getId() + " cheka");
 								wait();
+								System.out.println("Thread " + Thread.currentThread().getId() + " nastavlja");
 							} catch (InterruptedException e) {
 								throw new RuntimeException(e);
 							}
 						}
 				}
 				
-				value = firstNode.value.get();
-				secNode = firstNode.nextNode.get();
-				
 				if (!firstNode.isMarked.compareAndSet(false, true)) {
+					System.out.println("MARKED!");
+					Thread.yield();
 					continue fromTheTop;
 				}
+				secNode = firstNode.nextNode.get();
 				
 				if (this.firstNodePtr.compareAndSet(firstNode, secNode)) {
-					return value;
-				} else {
-					System.out.println("Aaaa");
-				}
+					synchronized (this) {
+						int value = firstNode.value.get();
+						System.out.println("Pročitao sam " + value);
+					}
+					return firstNode.value.get();
+				} else 
+					throw new IllegalStateException("Šta je bre ovo");
 			}
 		}
 		
