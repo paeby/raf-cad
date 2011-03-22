@@ -1,7 +1,6 @@
 package solutions.blockingqueue;
 
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -55,6 +54,7 @@ public class BlockingQueueSolutions {
 	
 	final static class LockFreeQueue implements BlockingQueue {
 		final AtomicReference<Node> firstNodePtr = new AtomicReference<Node>(null);
+		final Node deletingDummyNode = new Node();
 		
 		@Override
 		public void put(int value) {
@@ -63,56 +63,61 @@ public class BlockingQueueSolutions {
 				newNode.value.set(value);
 				
 				AtomicReference<Node> lastNodePtr;
-				Node lastNode = null;
 				fromTheTop: while (true) {
 					lastNodePtr = firstNodePtr;
-					lastNode = null;
 					do {
-						while (lastNodePtr.get() != null) {
-							lastNode = lastNodePtr.get();
-							lastNodePtr = lastNode.nextNode;
+						while (true) {
+							Node node = lastNodePtr.get();
+							if (node == null)
+								break;
+							if (node == deletingDummyNode)
+								continue fromTheTop;
+							lastNodePtr = node.nextNode;
 						}
 					} while (!lastNodePtr.compareAndSet(null, newNode));
-					if (lastNode != null && lastNode.isMarked.get())
-						continue fromTheTop;
 					return;
 				}
 			} finally {
 				synchronized (this) {
-					notify();
+					notifyAll();
 				}
 			}
 		}
 		
 		@Override
 		public int remove() {
-			Node firstNode, secNode;
-			while (true) {
-				firstNode = null;
-				while (firstNode == null) {
-					firstNode = this.firstNodePtr.get();
-					if (firstNode != null)
-						break;
-					else
-						synchronized (this) {
-							try {
+			AtomicReference<Node> firstPtr = this.firstNodePtr, secNextPtr;
+			Node first, second;
+			int value;
+			fromTheTop: while (true) {
+				first = firstPtr.get();
+				while (first == null) {
+					synchronized (this) {
+						try {
+							first = firstPtr.get();
+							if (first != null)
+								break;
+							else
 								wait();
-							} catch (InterruptedException e) {
-								throw new RuntimeException(e);
-							}
+						} catch (InterruptedException e) {
+							throw new RuntimeException(e);
 						}
+					}
 				}
 				
-				if (!firstNode.isMarked.compareAndSet(false, true)) {
-					System.out.println("Marked");
-					Thread.yield();
-					continue;
-				}
-				secNode = firstNode.nextNode.get();
+				value = first.value.get();
+				secNextPtr = first.nextNode;
 				
-				if (this.firstNodePtr.compareAndSet(firstNode, secNode)) {
-					return firstNode.value.get();
-				} else 
+				do {
+					second = secNextPtr.get();
+					if (second == deletingDummyNode) {
+						continue fromTheTop;
+					}
+				} while (!secNextPtr.compareAndSet(second, deletingDummyNode));
+				
+				if (this.firstNodePtr.compareAndSet(first, second)) {
+					return value;
+				} else
 					throw new IllegalStateException("Šta je bre ovo");
 			}
 		}
@@ -120,7 +125,6 @@ public class BlockingQueueSolutions {
 		private static class Node {
 			final AtomicInteger value = new AtomicInteger(-1);
 			final AtomicReference<Node> nextNode = new AtomicReference<Node>(null);
-			final AtomicBoolean isMarked = new AtomicBoolean(false);
 		}
 	}
 	

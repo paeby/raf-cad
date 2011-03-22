@@ -23,6 +23,7 @@ public class BlockingQueueProblemInstance {
 					for (int i = 0; i < insertionsPerThread; i++) {
 						queue.put(i * numberOfThreads + threadId);
 					}
+					
 					// all alright
 					threadsLeftToFinish.decrementAndGet();
 					synchronized (BlockingQueueProblemInstance.this) {

@@ -116,7 +116,10 @@ public class FifoQueueSolutions {
 				CASRegister elemPtr = system.getCASRegister(1);
 				int elem;
 				do {
-					while ((elem = elemPtr.read()) != 0) {
+					while (true) {
+						elem = elemPtr.read();
+						if (elem == 0)
+							break;
 						if (elem < 0)
 							continue fromTheTop;
 						elemPtr = system.getCASRegister(elem + 1);
@@ -142,7 +145,7 @@ public class FifoQueueSolutions {
 					if (second < 0) {
 						continue fromTheTop;
 					}
-				} while (!secNextPtr.compareAndSet(second, -second - 1));
+				} while (!secNextPtr.compareAndSet(second, -1));
 				
 				if (firstPtr.compareAndSet(first, second)) {
 					return value;
