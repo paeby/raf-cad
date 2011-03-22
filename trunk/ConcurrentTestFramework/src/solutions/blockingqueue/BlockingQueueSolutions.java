@@ -94,15 +94,12 @@ public class BlockingQueueSolutions {
 				while (first == null) {
 					synchronized (this) {
 						try {
-							first = firstPtr.get();
-							if (first != null)
-								break;
-							else
-								wait();
+							wait(5);
 						} catch (InterruptedException e) {
 							throw new RuntimeException(e);
 						}
 					}
+					first = firstPtr.get();
 				}
 				
 				value = first.value.get();
@@ -110,9 +107,8 @@ public class BlockingQueueSolutions {
 				
 				do {
 					second = secNextPtr.get();
-					if (second == deletingDummyNode) {
+					if (second == deletingDummyNode)
 						continue fromTheTop;
-					}
 				} while (!secNextPtr.compareAndSet(second, deletingDummyNode));
 				
 				if (this.firstNodePtr.compareAndSet(first, second)) {
