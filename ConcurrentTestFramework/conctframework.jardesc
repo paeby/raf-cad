@@ -15,6 +15,7 @@
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.addition"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;core.impl.registers"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.consensus"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.unsafequeue"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.queue"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.mutex"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common.registers"/>
@@ -26,12 +27,13 @@
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common.tasks"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.crossing"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.balance"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/test"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common.problem"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.blockingqueue"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.tuple"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.snapshot"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;core.impl.problem"/>
-        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;useful"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common"/>
     </selectedElements>
 </jardesc>
