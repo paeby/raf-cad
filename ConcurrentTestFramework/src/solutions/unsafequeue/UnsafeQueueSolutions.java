@@ -20,7 +20,7 @@ public class UnsafeQueueSolutions {
 
 	}
 
-	final static class PositivelyWorkingQueue implements UnsafeQueue {
+	public final static class PositivelyWorkingQueue implements UnsafeQueue {
 		final LinkedList<Integer> linkedList = new LinkedList<Integer>();
 
 		@Override
@@ -36,10 +36,10 @@ public class UnsafeQueueSolutions {
 		}
 	}
 
-	final static class LockFreeQueue implements UnsafeQueue {
+	public final static class LockFreeQueue implements UnsafeQueue {
 		final AtomicReference<Node> firstNodePtr = new AtomicReference<Node>(null);
 		final Node deletingDummyNode = new Node();
-
+		
 		@Override
 		public void put(int value) {
 			Node newNode = new Node();
