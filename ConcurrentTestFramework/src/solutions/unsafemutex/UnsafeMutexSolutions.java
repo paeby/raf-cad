@@ -13,70 +13,75 @@ import examples.unsafemutex.UnsafeMutexTester;
 public class UnsafeMutexSolutions {
 	final static class DummyUnsafeMutex implements UnsafeMutex {
 		@Override
-		public void lock() {}
-		
+		public void lock() {
+		}
+
 		@Override
-		public void unlock() {}
+		public void unlock() {
+		}
 	}
-	
+
 	final static class WorkingDummyUnsafeMutex implements UnsafeMutex {
 		private final ReentrantLock lock = new ReentrantLock();
-		
+
 		@Override
 		public void lock() {
 			lock.lock();
 		}
-		
+
 		@Override
 		public void unlock() {
 			lock.unlock();
 		}
 	}
-	
+
 	final static class CasUnsafeMutex implements UnsafeMutex {
 		private final AtomicReference<Thread> threadHoldingTheLock = new AtomicReference<Thread>(null);
 		private final LinkedList<Thread> waitingThreads = new LinkedList<Thread>();
 		private final AtomicBoolean workingWithWaitingList = new AtomicBoolean(false);
 		private final Unsafe unsafe = UnsafeHelper.getUnsafe();
-		
+
 		@Override
 		public void lock() {
 			while (true) {
 				try {
 					while (!workingWithWaitingList.compareAndSet(false, true))
 						Thread.yield();
-					
+
 					if (threadHoldingTheLock.compareAndSet(null, Thread.currentThread()))
 						return;
-					
+
 					waitingThreads.addLast(Thread.currentThread());
 				} finally {
 					workingWithWaitingList.set(false);
 				}
-				
+
 				unsafe.park(false, 0l);
 			}
 		}
-		
+
 		@Override
 		public void unlock() {
 			if (!threadHoldingTheLock.compareAndSet(Thread.currentThread(), null))
 				throw new IllegalStateException("Unlock called by a thread not in posession of the lock");
-			
-			while (!workingWithWaitingList.compareAndSet(false, true)) {
-				Thread.yield();
-			}
+
 			Thread waitingThread = null;
-			if (!waitingThreads.isEmpty()) {
-				waitingThread = waitingThreads.removeFirst();
+			try {
+				while (!workingWithWaitingList.compareAndSet(false, true)) {
+					Thread.yield();
+				}
+				if (!waitingThreads.isEmpty()) {
+					waitingThread = waitingThreads.removeFirst();
+				}
+			} finally {
+				workingWithWaitingList.set(false);
 			}
-			workingWithWaitingList.set(false);
-			
+
 			if (waitingThread != null)
 				unsafe.unpark(waitingThread);
 		}
 	}
-	
+
 	public static void main(String[] args) {
 		UnsafeMutexTester.testUnsafeMutex(new CasUnsafeMutex());
 	}
