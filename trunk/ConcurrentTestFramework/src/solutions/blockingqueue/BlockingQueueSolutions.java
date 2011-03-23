@@ -1,9 +1,13 @@
 package solutions.blockingqueue;
 
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import sun.misc.Unsafe;
+import useful.UnsafeHelper;
 import examples.blockingqueue.BlockingQueue;
 import examples.blockingqueue.BlockingQueueTester;
 
@@ -54,7 +58,10 @@ public class BlockingQueueSolutions {
 	
 	final static class LockFreeQueue implements BlockingQueue {
 		final AtomicReference<Node> firstNodePtr = new AtomicReference<Node>(null);
+		final LinkedList<Thread> waitingList = new LinkedList<Thread>();
+		final AtomicBoolean workingWithWaitingList = new AtomicBoolean(false);
 		final Node deletingDummyNode = new Node();
+		final Unsafe unsafe = UnsafeHelper.getUnsafe();
 		
 		@Override
 		public void put(int value) {
@@ -78,8 +85,14 @@ public class BlockingQueueSolutions {
 					return;
 				}
 			} finally {
-				synchronized (this) {
-					notifyAll();
+				try {
+					while (!workingWithWaitingList.compareAndSet(false, true))
+						Thread.yield();
+					if (!waitingList.isEmpty()) {
+						unsafe.unpark(waitingList.removeFirst());
+					}
+				} finally {
+					workingWithWaitingList.set(false);
 				}
 			}
 		}
@@ -92,13 +105,17 @@ public class BlockingQueueSolutions {
 			fromTheTop: while (true) {
 				first = firstPtr.get();
 				while (first == null) {
-					synchronized (this) {
-						try {
-							wait(5);
-						} catch (InterruptedException e) {
-							throw new RuntimeException(e);
+					try {
+						while (!workingWithWaitingList.compareAndSet(false, true))
+							Thread.yield();
+						Thread currentThread = Thread.currentThread();
+						if (!waitingList.contains(currentThread)) {
+							waitingList.add(currentThread);
 						}
+					} finally {
+						workingWithWaitingList.set(false);
 					}
+					unsafe.park(true, 5l);
 					first = firstPtr.get();
 				}
 				
