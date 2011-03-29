@@ -1,7 +1,9 @@
 package solutions.unsafemutex;
 
 import java.util.LinkedList;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -9,9 +11,10 @@ import sun.misc.Unsafe;
 import useful.UnsafeHelper;
 import examples.unsafemutex.UnsafeMutex;
 import examples.unsafemutex.UnsafeMutexTester;
+import examples.unsafequeue.UnsafeQueue;
 
 public class UnsafeMutexSolutions {
-	final static class DummyUnsafeMutex implements UnsafeMutex {
+	public final static class DummyUnsafeMutex implements UnsafeMutex {
 		@Override
 		public void lock() {}
 		
@@ -19,7 +22,7 @@ public class UnsafeMutexSolutions {
 		public void unlock() {}
 	}
 	
-	final static class WorkingDummyUnsafeMutex implements UnsafeMutex {
+	public final static class WorkingDummyUnsafeMutex implements UnsafeMutex {
 		private final ReentrantLock lock = new ReentrantLock();
 		
 		@Override
@@ -33,7 +36,7 @@ public class UnsafeMutexSolutions {
 		}
 	}
 	
-	final static class CasUnsafeMutex implements UnsafeMutex {
+	public final static class CasUnsafeMutex implements UnsafeMutex {
 		private final AtomicReference<Thread> threadHoldingTheLock = new AtomicReference<Thread>(null);
 		private final LinkedList<Thread> waitingThreads = new LinkedList<Thread>();
 		private final AtomicBoolean workingWithWaitingList = new AtomicBoolean(false);
@@ -80,7 +83,7 @@ public class UnsafeMutexSolutions {
 		}
 	}
 	
-	final static class FairMutex implements UnsafeMutex {
+	public final static class FairMutex implements UnsafeMutex {
 		final AtomicBoolean workingWithTheQueue = new AtomicBoolean(false);
 		final LinkedList<Thread> waitingList = new LinkedList<Thread>();
 		final Unsafe unsafe = UnsafeHelper.getUnsafe();
@@ -118,7 +121,230 @@ public class UnsafeMutexSolutions {
 		}
 	}
 	
-	public static void main(String[] args) {
-		UnsafeMutexTester.testUnsafeMutex(new FairMutex());
+	public final static class BakeryMutex implements UnsafeMutex {
+		final TreeSet<ThreadInfo> threadInfos = new TreeSet<ThreadInfo>();
+		final AtomicBoolean workingWithSet = new AtomicBoolean();
+		final AtomicLong ticket = new AtomicLong(Long.MIN_VALUE);
+		final Unsafe unsafe = UnsafeHelper.getUnsafe();
+		
+		@Override
+		public void lock() {
+			while (!workingWithSet.compareAndSet(false, true))
+				Thread.yield();
+
+			long myTicket = ticket.incrementAndGet();
+			ThreadInfo myThreadInfo = new ThreadInfo(myTicket);
+			
+			threadInfos.add(myThreadInfo);
+			
+			while (true) {
+				final ThreadInfo smallestTicketThreadInfo = threadInfos.first();
+				workingWithSet.set(false);
+				
+				if (smallestTicketThreadInfo == myThreadInfo)
+					return;
+				
+				Thread.yield();
+//				unsafe.park(false, 0l);
+				
+				while (!workingWithSet.compareAndSet(false, true))
+					Thread.yield();
+			}
+		}
+		
+		@Override
+		public void unlock() {
+			while (!workingWithSet.compareAndSet(false, true))
+				Thread.yield();
+			ThreadInfo myInfo = threadInfos.first();
+			if (myInfo.thread != Thread.currentThread())
+				throw new IllegalStateException("Ne izbacujem sebe!");
+			threadInfos.remove(myInfo);
+			
+//			if (!threadInfos.isEmpty()) {
+//				ThreadInfo secondBest = threadInfos.first();
+//				while (secondBest.thread.getState() != Thread.State.WAITING)
+//					Thread.yield();
+//				unsafe.unpark(secondBest);
+//			}
+			workingWithSet.set(false);
+		}
+		
+		static class ThreadInfo implements Comparable<ThreadInfo> {
+			final Thread thread;
+			final long ticket;
+			
+			public ThreadInfo(long ticket) {
+				this.thread = Thread.currentThread();
+				this.ticket = ticket;
+			}
+			
+			@Override
+			public String toString() {
+				return "" + ticket;
+			}
+			
+			@Override
+			public int compareTo(ThreadInfo o) {
+				if (ticket < o.ticket)
+					return -1;
+				if (ticket > o.ticket)
+					return 1;
+				else
+					return 0;
+			}
+		}
 	}
+	
+	public final static class FairerMutex implements UnsafeMutex {
+		final Unsafe unsafe = UnsafeHelper.getUnsafe();
+		final WaitFreeQueue<Thread> waitingThreads = new WaitFreeQueue<Thread>();
+		final AtomicBoolean acquiringTheSecondElemInTheQueueLock = new AtomicBoolean(false);
+		
+		@Override
+		public void lock() {
+			waitingThreads.enqueue(Thread.currentThread());
+			while (waitingThreads.peek() != Thread.currentThread()) {
+				unsafe.park(false, 0);
+			}
+		}
+		
+		@Override
+		public void unlock() {
+			Thread thisThread = waitingThreads.dequeue();
+			if (thisThread != Thread.currentThread())
+				throw new IllegalStateException();
+			
+			Thread otherThread = waitingThreads.peek();
+			
+			if (otherThread == null)
+				return;
+			
+			while (otherThread.getState() != Thread.State.WAITING) {
+				if (otherThread.getState() == Thread.State.TERMINATED)
+					throw new IllegalStateException("Terminated!");
+				Thread.yield();
+			}
+			unsafe.unpark(otherThread);
+			return;
+		}
+	}
+	
+	public static class WaitFreeQueue<T> {
+		final AtomicReference<Node> head = new AtomicReference<Node>(null);
+		final AtomicReference<Node> tail = new AtomicReference<Node>(null);
+		
+		public WaitFreeQueue() {
+			Node node = new Node(null);
+			head.set(node);
+			tail.set(node);
+		}
+		
+		public void enqueue(T value) {
+			Node node = new Node(value);
+			while (true) {
+				Node t = tail.get();
+				Node s = t.next.get();
+				if (t == tail.get()) {
+					if (s == null) {
+						if (t.next.compareAndSet(s, node)) {
+							tail.compareAndSet(t, node);
+							return;
+						}
+					} else {
+						tail.compareAndSet(t, s);
+					}
+				}
+			}
+		}
+		
+		public T peek() {
+			while (true) {
+				Node h = head.get();
+				Node t = tail.get();
+				Node first = h.next.get();
+				if (h == head.get()) {
+					if (h == t) {
+						if (first == null)
+							return null;
+						else
+							tail.compareAndSet(t, first);
+					} else {
+						T value = first.value.get();
+						if (value != null)
+							return value;
+						else
+							head.compareAndSet(h, first);
+					}
+				}
+			}
+		}
+		
+		public T dequeue() {
+			while (true) {
+				Node h = head.get();
+				Node t = tail.get();
+				Node first = h.next.get();
+				if (h == head.get()) {
+					if (h == t) {
+						if (first == null)
+							return null;
+						else
+							tail.compareAndSet(t, first);
+					} else if (head.compareAndSet(h, first)) {
+						T value = first.value.get();
+						if (value != null) {
+							first.value.set(null);
+							return value;
+						}
+					}
+				}
+			}
+		}
+		
+		class Node {
+			public AtomicReference<T> value;
+			public AtomicReference<Node> next;
+			
+			public Node(T value) {
+				this.value = new AtomicReference<T>(value);
+				this.next = new AtomicReference<Node>(null);
+			}
+		}
+	}
+	
+	public static class UnsafeQueueWrapper implements UnsafeQueue {
+		public final WaitFreeQueue<Integer> queue = new WaitFreeQueue<Integer>();
+		
+		public UnsafeQueueWrapper() {}
+		
+		@Override
+		public int remove() {
+			Integer value = queue.dequeue();
+			return value == null ? -1 : value;
+		}
+		
+		@Override
+		public void put(int value) {
+			queue.enqueue(value);
+		}
+	}
+	
+	public static void main(String[] args) {
+		// final AtomicBoolean done = new AtomicBoolean();
+		// final UnsafeQueueWrapper unsafeQueue = new UnsafeQueueWrapper();
+		// new Thread() {
+		// public void run() {
+		// while (!done.get())
+		// unsafeQueue.queue.peek();
+		// };
+		// }.start();
+		//
+		// for (int i = 0; i < 100; i++) {
+		// UnsafeQueueTester.testUnsafeQueue(unsafeQueue);
+		// }
+		// done.set(true);
+		UnsafeMutexTester.testUnsafeMutex(new BakeryMutex());
+	}
+	
 }
