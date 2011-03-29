@@ -3,6 +3,8 @@ package solutions.condition;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicMarkableReference;
+import java.util.concurrent.atomic.AtomicReference;
 
 import sun.misc.Unsafe;
 import useful.UnsafeHelper;
@@ -48,7 +50,7 @@ public class ConditionSolutions {
 		}
 	}
 	
-	public static final class ConditionBusyWait implements Condition {
+	public static final class ConditionBusyWaitNoStarvation implements Condition {
 		private final AtomicInteger state = new AtomicInteger(0);
 		private final AtomicInteger numOfWaitingThreads = new AtomicInteger(0);
 		
@@ -78,10 +80,10 @@ public class ConditionSolutions {
 		}
 	}
 	
-	public static final class ConditionParkFair implements Condition {
-		private LinkedList<Thread> waitingThreads = new LinkedList<Thread>();
-		private AtomicBoolean someoneWorkingWithThreadsList = new AtomicBoolean(false);
-		private Unsafe unsafe = UnsafeHelper.getUnsafe();
+	public static final class ConditionParkNoStarvation implements Condition {
+		private volatile LinkedList<Thread> waitingThreads = new LinkedList<Thread>();
+		private final AtomicBoolean someoneWorkingWithThreadsList = new AtomicBoolean(false);
+		private final Unsafe unsafe = UnsafeHelper.getUnsafe();
 		
 		@Override
 		public void myWait() {
@@ -136,6 +138,6 @@ public class ConditionSolutions {
 	}
 	
 	public static void main(String[] args) {
-		ConditionTester.testCondition(new ConditionParkFair());
+		ConditionTester.testCondition(new ConditionBusyWaitNoStarvation());
 	}
 }
