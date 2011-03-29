@@ -39,7 +39,7 @@ public class GathererSolutions {
 		private final AtomicReferenceArray<Object> results = new AtomicReferenceArray<Object>(5);
 		private final AtomicReferenceArray<Thread> parkedThreads = new AtomicReferenceArray<Thread>(5);
 		private final AtomicInteger resultsRemaining = new AtomicInteger(5);
-		private final AtomicReference<Object[]> returnValue = new AtomicReference<Object[]>(null);
+		private final AtomicReference<Object[]> sharedReturnValueRef = new AtomicReference<Object[]>(null);
 		private final Unsafe unsafe = UnsafeHelper.getUnsafe();
 		
 		@Override
@@ -51,7 +51,7 @@ public class GathererSolutions {
 				Object[] returnValue = new Object[5];
 				for (int i = 0; i < 5; i++)
 					returnValue[i] = results.get(i);
-				this.returnValue.set(returnValue);
+				this.sharedReturnValueRef.set(returnValue);
 				for (int i = 0; i < 5; i++)
 					if (i != key) {
 						while (parkedThreads.get(i).getState() != Thread.State.WAITING)
@@ -61,7 +61,7 @@ public class GathererSolutions {
 			} else
 				unsafe.park(false, 0l);
 			
-			return returnValue.get();
+			return sharedReturnValueRef.get();
 		}
 	}
 	
