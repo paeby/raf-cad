@@ -98,14 +98,14 @@ public class UnsafeMutexSolutions {
 				while (!workingWithTheQueue.compareAndSet(false, true))
 					Thread.yield();
 			}
-			workingWithTheQueue.set(false);			
+			workingWithTheQueue.set(false);
 		}
 		
 		@Override
 		public void unlock() {
 			while (!workingWithTheQueue.compareAndSet(false, true))
 				Thread.yield();
-
+			
 			waitingList.removeFirst();
 			Thread otherThread = waitingList.isEmpty() ? null : waitingList.getFirst();
 			
