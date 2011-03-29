@@ -1,11 +1,11 @@
 package examples.unsafereadwrite;
 
 public interface UnsafeReadWriteLock {
-	public void readLock();
-
-	public void readUnock();
-
-	public void writeLock();
-
-	public void writeUnlock();
+	public void lockRead();
+	
+	public void unlockRead();
+	
+	public void lockWrite();
+	
+	public void unlockWrite();
 }
