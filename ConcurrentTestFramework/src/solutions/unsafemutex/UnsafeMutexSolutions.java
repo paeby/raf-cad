@@ -2,7 +2,6 @@ package solutions.unsafemutex;
 
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -82,7 +81,6 @@ public class UnsafeMutexSolutions {
 	}
 	
 	final static class FairMutex implements UnsafeMutex {
-		final AtomicInteger lockCalled = new AtomicInteger(0);
 		final AtomicBoolean workingWithTheQueue = new AtomicBoolean(false);
 		final LinkedList<Thread> waitingList = new LinkedList<Thread>();
 		final Unsafe unsafe = UnsafeHelper.getUnsafe();
