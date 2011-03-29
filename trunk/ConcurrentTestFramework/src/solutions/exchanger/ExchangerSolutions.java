@@ -1,6 +1,5 @@
 package solutions.exchanger;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import sun.misc.Unsafe;
@@ -18,13 +17,13 @@ public class ExchangerSolutions {
 	}
 	
 	public static final class ExchangerBusyWait implements Exchanger {
-		private final AtomicInteger value1 = new AtomicInteger(-1);
-		private final AtomicInteger value2 = new AtomicInteger(-1);
+		private final AtomicReference<Integer> value1 = new AtomicReference<Integer>(null);
+		private final AtomicReference<Integer> value2 = new AtomicReference<Integer>(null);
 		
 		@Override
 		public int exchange(int myint) {
-			if (value1.compareAndSet(-1, myint)) {
-				while (value2.get() == -1)
+			if (value1.compareAndSet(null, myint)) {
+				while (value2.get() == null)
 					Thread.yield();
 				return value2.get();
 			} else {
@@ -35,14 +34,14 @@ public class ExchangerSolutions {
 	}
 	
 	public static final class ExchangerPark implements Exchanger {
-		private final AtomicInteger value1 = new AtomicInteger(-1);
-		private final AtomicInteger value2 = new AtomicInteger(-1);
+		private final AtomicReference<Integer> value1 = new AtomicReference<Integer>(null);
+		private final AtomicReference<Integer> value2 = new AtomicReference<Integer>(null);
 		private final AtomicReference<Thread> waitingThreadRef = new AtomicReference<Thread>(null);
+		private final Unsafe unsafe = UnsafeHelper.getUnsafe();
 		
 		@Override
 		public int exchange(int myint) {
-			Unsafe unsafe = UnsafeHelper.getUnsafe();
-			if (value1.compareAndSet(-1, myint)) {
+			if (value1.compareAndSet(null, myint)) {
 				waitingThreadRef.set(Thread.currentThread());
 				unsafe.park(false, 0l);
 				return value2.get();

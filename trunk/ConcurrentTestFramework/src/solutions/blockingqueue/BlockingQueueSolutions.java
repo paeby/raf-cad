@@ -25,17 +25,12 @@ public class BlockingQueueSolutions {
 	
 	final static class NonBlockingQueue implements BlockingQueue {
 		@Override
-		public void put(int value) {
-			// TODO Auto-generated method stub
-			
-		}
+		public void put(int value) {}
 		
 		@Override
 		public int remove() {
-			// TODO Auto-generated method stub
 			return 0;
 		}
-		
 	}
 	
 	final static class PositivelyWorkingBlockingQueue implements BlockingQueue {
