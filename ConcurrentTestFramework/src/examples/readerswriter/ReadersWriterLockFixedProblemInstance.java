@@ -10,8 +10,8 @@ import common.tasks.Task;
 
 import core.ConcurrentManagedSystem;
 
-public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<ReadersWriterLock>   {
-
+public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<ReadersWriterLock> {
+	
 	private final int[] readerSteps;
 	private final int[] writerSteps;
 	
@@ -20,10 +20,7 @@ public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<Re
 		this.readerSteps = readerSteps;
 		this.writerSteps = writerSteps;
 	}
-
-
-
-
+	
 	@Override
 	public boolean execute(final ConcurrentManagedSystem managedSystem, final ReadersWriterLock solution) {
 		final AtomicBoolean correct = new AtomicBoolean(true);
@@ -32,30 +29,30 @@ public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<Re
 		final AtomicInteger readersActive = new AtomicInteger();
 		final AtomicInteger writersActive = new AtomicInteger();
 		
-		for(int i = 0;i<readerSteps.length;i++) {
+		for (int i = 0; i < readerSteps.length; i++) {
 			final int curStep = readerSteps[i];
-			final ProcessInfo callerInfo = new ProcessInfo(i, readerSteps.length+writerSteps.length);
+			final ProcessInfo callerInfo = new ProcessInfo(i, readerSteps.length + writerSteps.length);
 			managedSystem.startTaskConcurrently(new Task() {
 				
 				@Override
 				public void execute(ConcurrentSystem system) {
-					for (int i = 0;i<curStep;i++) {
+					for (int i = 0; i < curStep; i++) {
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " reader acquiring lock");
 						solution.lockRead(system, callerInfo);
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " reader acquired lock");
-
+						
 						int cur = readersActive.incrementAndGet();
 						maxReaders.set(Math.max(maxReaders.get(), cur));
-						if (writersActive.get()>0)
+						if (writersActive.get() > 0)
 							incorrect();
 						system.yield();
-						if (writersActive.get()>0)
+						if (writersActive.get() > 0)
 							incorrect();
 						
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " reader realising lock");
 						solution.unlockRead(system, callerInfo);
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " reader realised lock");
-
+						
 						readersActive.decrementAndGet();
 					}
 				}
@@ -72,27 +69,26 @@ public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<Re
 			});
 		}
 		
-		
-		for(int i = 0;i<writerSteps.length;i++) {
+		for (int i = 0; i < writerSteps.length; i++) {
 			final int curStep = writerSteps[i];
-			final ProcessInfo callerInfo = new ProcessInfo(readerSteps.length+i, readerSteps.length+writerSteps.length);
+			final ProcessInfo callerInfo = new ProcessInfo(readerSteps.length + i, readerSteps.length + writerSteps.length);
 			managedSystem.startTaskConcurrently(new Task() {
 				
 				@Override
 				public void execute(ConcurrentSystem system) {
-					for (int i = 0;i<curStep;i++) {
+					for (int i = 0; i < curStep; i++) {
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " writer acquiring lock");
 						solution.lockWrite(system, callerInfo);
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " writer acquired lock");
-
-						if (writersActive.incrementAndGet()>1)
+						
+						if (writersActive.incrementAndGet() > 1)
 							incorrect();
-						if (readersActive.get()>0)
+						if (readersActive.get() > 0)
 							incorrect();
 						system.yield();
-						if (writersActive.get()>1)
+						if (writersActive.get() > 1)
 							incorrect();
-						if (readersActive.get()>0)
+						if (readersActive.get() > 0)
 							incorrect();
 						
 						managedSystem.addLogLine("\t\t\tcid=" + callerInfo.getCurrentId() + " writer realising lock");
@@ -117,10 +113,10 @@ public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<Re
 		System.out.print(maxReaders);
 		return correct.get();
 	}
-
+	
 	@Override
 	public String toString() {
 		return "RWProblemInstance[readers : " + readerSteps.length + ", writers : " + writerSteps.length + "]";
 	}
-
+	
 }
