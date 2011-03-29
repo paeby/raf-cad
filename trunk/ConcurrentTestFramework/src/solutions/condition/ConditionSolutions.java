@@ -3,8 +3,6 @@ package solutions.condition;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicMarkableReference;
-import java.util.concurrent.atomic.AtomicReference;
 
 import sun.misc.Unsafe;
 import useful.UnsafeHelper;
