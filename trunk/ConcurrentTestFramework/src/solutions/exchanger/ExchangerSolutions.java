@@ -51,6 +51,8 @@ public class ExchangerSolutions {
 				Thread waitingThread;
 				while ((waitingThread = waitingThreadRef.get()) == null)
 					Thread.yield();
+				while (waitingThread.getState() != Thread.State.WAITING)
+					Thread.yield();
 				unsafe.unpark(waitingThread);
 				return value1.get();
 			}

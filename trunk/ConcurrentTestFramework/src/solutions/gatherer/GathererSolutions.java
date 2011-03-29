@@ -43,8 +43,11 @@ public class GathererSolutions {
 			
 			if (resultsRemaining.decrementAndGet() == 0) {
 				for (int i = 0; i < 5; i++)
-					if (i != key)
+					if (i != key) {
+						while (parkedThreads[i].getState() != Thread.State.WAITING)
+							Thread.yield();
 						unsafe.unpark(parkedThreads[i]);
+					}
 			} else
 				unsafe.park(false, 0l);
 			
