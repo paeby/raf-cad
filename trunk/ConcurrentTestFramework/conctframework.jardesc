@@ -24,6 +24,7 @@
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.consensus"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.unsafequeue"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.queue"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.unsafereadwrite"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.unsafemutex"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.counter"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.readerswriter"/>
