@@ -1,7 +1,6 @@
 package solutions.unsafemutex;
 
 import java.util.LinkedList;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -12,7 +11,6 @@ import sun.misc.Unsafe;
 import useful.UnsafeHelper;
 import examples.unsafemutex.UnsafeMutex;
 import examples.unsafemutex.UnsafeMutexTester;
-import examples.unsafequeue.UnsafeQueue;
 
 public class UnsafeMutexSolutions {
 	public final static class DummyUnsafeMutex implements UnsafeMutex {
@@ -84,17 +82,17 @@ public class UnsafeMutexSolutions {
 		}
 	}
 	
-	public final static class FairMutex implements UnsafeMutex {
+	public final static class QueuingMutex implements UnsafeMutex {
 		final AtomicBoolean workingWithTheQueue = new AtomicBoolean(false);
-		final LinkedList<Thread> waitingList = new LinkedList<Thread>();
+		final LinkedList<Thread> queue = new LinkedList<Thread>();
 		final Unsafe unsafe = UnsafeHelper.getUnsafe();
 		
 		@Override
 		public void lock() {
 			while (!workingWithTheQueue.compareAndSet(false, true))
 				Thread.yield();
-			waitingList.addLast(Thread.currentThread());
-			while (waitingList.getFirst() != Thread.currentThread()) {
+			queue.addLast(Thread.currentThread());
+			while (queue.getFirst() != Thread.currentThread()) {
 				workingWithTheQueue.set(false);
 				
 				unsafe.park(false, 0);
@@ -110,8 +108,8 @@ public class UnsafeMutexSolutions {
 			while (!workingWithTheQueue.compareAndSet(false, true))
 				Thread.yield();
 			
-			waitingList.removeFirst();
-			Thread otherThread = waitingList.isEmpty() ? null : waitingList.getFirst();
+			queue.removeFirst();
+			Thread otherThread = queue.isEmpty() ? null : queue.getFirst();
 			
 			workingWithTheQueue.set(false);
 			if (otherThread != null) {
@@ -177,115 +175,6 @@ public class UnsafeMutexSolutions {
 			unlockingInProgress.set(false);
 			if (nextToWakeUp != null)
 				unsafe.unpark(nextToWakeUp);
-		}
-	}
-	
-	public final static class BakeryComplicatedMutex implements UnsafeMutex {
-		final TreeSet<ThreadInfo> threadInfos = new TreeSet<ThreadInfo>();
-		final AtomicBoolean workingWithSet = new AtomicBoolean();
-		final AtomicLong ticket = new AtomicLong(Long.MIN_VALUE);
-		final Unsafe unsafe = UnsafeHelper.getUnsafe();
-		
-		@Override
-		public void lock() {
-			while (!workingWithSet.compareAndSet(false, true))
-				Thread.yield();
-			
-			long myTicket = ticket.incrementAndGet();
-			ThreadInfo myThreadInfo = new ThreadInfo(myTicket);
-			
-			threadInfos.add(myThreadInfo);
-			
-			while (true) {
-				final ThreadInfo smallestTicketThreadInfo = threadInfos.first();
-				workingWithSet.set(false);
-				
-				if (smallestTicketThreadInfo == myThreadInfo)
-					return;
-				
-				Thread.yield();
-				// unsafe.park(false, 0l);
-				
-				while (!workingWithSet.compareAndSet(false, true))
-					Thread.yield();
-			}
-		}
-		
-		@Override
-		public void unlock() {
-			while (!workingWithSet.compareAndSet(false, true))
-				Thread.yield();
-			ThreadInfo myInfo = threadInfos.first();
-			if (myInfo.thread != Thread.currentThread())
-				throw new IllegalStateException("Ne izbacujem sebe!");
-			threadInfos.remove(myInfo);
-			
-			// if (!threadInfos.isEmpty()) {
-			// ThreadInfo secondBest = threadInfos.first();
-			// while (secondBest.thread.getState() != Thread.State.WAITING)
-			// Thread.yield();
-			// unsafe.unpark(secondBest);
-			// }
-			workingWithSet.set(false);
-		}
-		
-		static class ThreadInfo implements Comparable<ThreadInfo> {
-			final Thread thread;
-			final long ticket;
-			
-			public ThreadInfo(long ticket) {
-				this.thread = Thread.currentThread();
-				this.ticket = ticket;
-			}
-			
-			@Override
-			public String toString() {
-				return "" + ticket;
-			}
-			
-			@Override
-			public int compareTo(ThreadInfo o) {
-				if (ticket < o.ticket)
-					return -1;
-				if (ticket > o.ticket)
-					return 1;
-				else
-					return 0;
-			}
-		}
-	}
-	
-	public final static class FairerMutex implements UnsafeMutex {
-		final Unsafe unsafe = UnsafeHelper.getUnsafe();
-		final WaitFreeQueue<Thread> waitingThreads = new WaitFreeQueue<Thread>();
-		final AtomicBoolean acquiringTheSecondElemInTheQueueLock = new AtomicBoolean(false);
-		
-		@Override
-		public void lock() {
-			waitingThreads.enqueue(Thread.currentThread());
-			while (waitingThreads.peek() != Thread.currentThread()) {
-				unsafe.park(false, 0);
-			}
-		}
-		
-		@Override
-		public void unlock() {
-			Thread thisThread = waitingThreads.dequeue();
-			if (thisThread != Thread.currentThread())
-				throw new IllegalStateException();
-			
-			Thread otherThread = waitingThreads.peek();
-			
-			if (otherThread == null)
-				return;
-			
-			while (otherThread.getState() != Thread.State.WAITING) {
-				if (otherThread.getState() == Thread.State.TERMINATED)
-					throw new IllegalStateException("Terminated!");
-				Thread.yield();
-			}
-			unsafe.unpark(otherThread);
-			return;
 		}
 	}
 	
@@ -372,37 +261,9 @@ public class UnsafeMutexSolutions {
 		}
 	}
 	
-	public static class UnsafeQueueWrapper implements UnsafeQueue {
-		public final WaitFreeQueue<Integer> queue = new WaitFreeQueue<Integer>();
-		
-		public UnsafeQueueWrapper() {}
-		
-		@Override
-		public int remove() {
-			Integer value = queue.dequeue();
-			return value == null ? -1 : value;
-		}
-		
-		@Override
-		public void put(int value) {
-			queue.enqueue(value);
-		}
-	}
+
 	
 	public static void main(String[] args) {
-		// final AtomicBoolean done = new AtomicBoolean();
-		// final UnsafeQueueWrapper unsafeQueue = new UnsafeQueueWrapper();
-		// new Thread() {
-		// public void run() {
-		// while (!done.get())
-		// unsafeQueue.queue.peek();
-		// };
-		// }.start();
-		//
-		// for (int i = 0; i < 100; i++) {
-		// UnsafeQueueTester.testUnsafeQueue(unsafeQueue);
-		// }
-		// done.set(true);
 		UnsafeMutexTester.testUnsafeMutex(new BakeryParkingMutex());
 	}
 	
