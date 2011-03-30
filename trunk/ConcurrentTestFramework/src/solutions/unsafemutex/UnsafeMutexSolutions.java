@@ -5,6 +5,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.ReentrantLock;
 
 import sun.misc.Unsafe;
@@ -121,7 +122,65 @@ public class UnsafeMutexSolutions {
 		}
 	}
 	
-	public final static class BakeryMutex implements UnsafeMutex {
+	public final static class BakeryBusyWaitMutex implements UnsafeMutex {
+		private final AtomicLong ticketDispenser = new AtomicLong(Long.MIN_VALUE);
+		private final AtomicLong currentCustomer = new AtomicLong(Long.MIN_VALUE);
+		
+		@Override
+		public void lock() {
+			long myTicket = ticketDispenser.getAndIncrement();
+			while (currentCustomer.get() != myTicket)
+				Thread.yield();
+		}
+		
+		@Override
+		public void unlock() {
+			currentCustomer.incrementAndGet();
+		}
+	}
+	
+	public final static class BakeryParkingMutex implements UnsafeMutex {
+		private static final int ARRAY_SIZE = 1000;
+		private final AtomicLong ticketDispenser = new AtomicLong(0);
+		private final AtomicLong currentCustomer = new AtomicLong(0);
+		private final AtomicReferenceArray<Thread> customersInLine = new AtomicReferenceArray<Thread>(ARRAY_SIZE);
+		private final Unsafe unsafe = UnsafeHelper.getUnsafe();
+		private final AtomicBoolean unlockingInProgress = new AtomicBoolean();
+		
+		@Override
+		public void lock() {
+			long myTicket = ticketDispenser.getAndIncrement();
+			customersInLine.set((int) (myTicket % ARRAY_SIZE), Thread.currentThread());
+			while (unlockingInProgress.get() != false)
+				Thread.yield();
+			while (currentCustomer.get() != myTicket) {
+				unsafe.park(false, 0l);
+			}
+			customersInLine.set((int) (myTicket % ARRAY_SIZE), null);
+		}
+		
+		@Override
+		public void unlock() {
+			long myTicket = currentCustomer.get();
+			Thread nextToWakeUp = null;
+			unlockingInProgress.set(true);
+			if (ticketDispenser.get() > myTicket + 1) {
+				while ((nextToWakeUp = customersInLine.get((int) ((myTicket + 1) % ARRAY_SIZE))) == null)
+					Thread.yield();
+				while (nextToWakeUp.getState() != Thread.State.WAITING) {
+					unlockingInProgress.set(false);
+					Thread.yield();
+					unlockingInProgress.set(true);
+				}
+			}
+			currentCustomer.incrementAndGet();
+			unlockingInProgress.set(false);
+			if (nextToWakeUp != null)
+				unsafe.unpark(nextToWakeUp);
+		}
+	}
+	
+	public final static class BakeryComplicatedMutex implements UnsafeMutex {
 		final TreeSet<ThreadInfo> threadInfos = new TreeSet<ThreadInfo>();
 		final AtomicBoolean workingWithSet = new AtomicBoolean();
 		final AtomicLong ticket = new AtomicLong(Long.MIN_VALUE);
@@ -131,7 +190,7 @@ public class UnsafeMutexSolutions {
 		public void lock() {
 			while (!workingWithSet.compareAndSet(false, true))
 				Thread.yield();
-
+			
 			long myTicket = ticket.incrementAndGet();
 			ThreadInfo myThreadInfo = new ThreadInfo(myTicket);
 			
@@ -145,7 +204,7 @@ public class UnsafeMutexSolutions {
 					return;
 				
 				Thread.yield();
-//				unsafe.park(false, 0l);
+				// unsafe.park(false, 0l);
 				
 				while (!workingWithSet.compareAndSet(false, true))
 					Thread.yield();
@@ -161,12 +220,12 @@ public class UnsafeMutexSolutions {
 				throw new IllegalStateException("Ne izbacujem sebe!");
 			threadInfos.remove(myInfo);
 			
-//			if (!threadInfos.isEmpty()) {
-//				ThreadInfo secondBest = threadInfos.first();
-//				while (secondBest.thread.getState() != Thread.State.WAITING)
-//					Thread.yield();
-//				unsafe.unpark(secondBest);
-//			}
+			// if (!threadInfos.isEmpty()) {
+			// ThreadInfo secondBest = threadInfos.first();
+			// while (secondBest.thread.getState() != Thread.State.WAITING)
+			// Thread.yield();
+			// unsafe.unpark(secondBest);
+			// }
 			workingWithSet.set(false);
 		}
 		
@@ -344,7 +403,7 @@ public class UnsafeMutexSolutions {
 		// UnsafeQueueTester.testUnsafeQueue(unsafeQueue);
 		// }
 		// done.set(true);
-		UnsafeMutexTester.testUnsafeMutex(new BakeryMutex());
+		UnsafeMutexTester.testUnsafeMutex(new BakeryParkingMutex());
 	}
 	
 }
