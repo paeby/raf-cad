@@ -11,6 +11,7 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;seminarski1.tester"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;core.impl.registers"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.mutex"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common.registers"/>
