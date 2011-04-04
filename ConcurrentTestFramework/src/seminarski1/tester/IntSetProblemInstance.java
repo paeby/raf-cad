@@ -12,41 +12,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import seminarski1.IntSet;
 
-/*
- * Neka tester ima sledeće režime:
- * - jedan thread koji radi sve. Ubaci ili izbaci ili proveri, a lokalno pamti šta da očekuje
- * - jedan thread koji radi sve, ali sa besmislenim operacijama
- * 
- * - više threadova koji rade sve, ali smisleno
- * - dozvoli besmislene operacije
- * - opet, proizvoljan broj random proverača, i samo nad besmislenom operacijom sem randoma znaju odgovor.
- * 
- * 
- * Treba testirati:
- *  - jedan thread, ubacuje, trazhi i izbacuje gde ima smisla.
- *  - jedan thread, koji radi i operacije koje nemaju smisla.
- *  - jedan thread koji ubacuje i izbacuje, a više contains threadova
- *  - isto ali sa besmislenim operacijama
- *  - vishe threadova, vodeći računa da ubacivanje i izbacivanje radi samo ako operacija treba da uspe.
- *  - vishe threadova koji rade bilo šta.
- *  
- *   Dakle, argumenti:
- *   veličina uzorka (uzorak je niz random int-ova)
- *   broj threadova koji drljaju
- *   broj threadova koji proveravaju
- *   da li raditi samo smislene operacije
- *   
- * svaki element uzorka ima tri faze: insert, delete i random. Ove faze se menjaju sa % šanse, i promena
- * se dogodi kada trenutne sve operacije nad tim elementom izađu.
- * 
- * U insert fazi, svaki thread pozove insert i proveri: contains vraća true bez obzira na šta metoda vrati.
- * U delete fazi, svaki pozove remove i proveri: contains vraća false bez obzira na rezultat operacije.
- * U random fazi svako poziva šta hoće i ne proverava ništa.
- * 
- * Na kraju testa, svaki element u insert fazi se sadrži, u remove ne, a na randomu nije važno.
- * 
- * @author Bocete
- */
 public class IntSetProblemInstance {
 	
 	private final static AtomicReference<ExecutorService> EXECUTOR = new AtomicReference<ExecutorService>(null);
@@ -122,10 +87,11 @@ public class IntSetProblemInstance {
 								boolean succeeded = intSet.addInt(sample.value);
 								boolean contains = intSet.contains(sample.value);
 								if (!contains && myPhase != SAMPLE_TESTING_PHASE.RANDOM) {
-									if (succeeded)
-										errorMessages.add("GREŠKA: contains vraća false nakon uspešnog ubacivanja");
-									else
-										errorMessages.add("GREŠKA: ubacivanje nije uspelo iako element nije unutra");
+									if (succeeded) {
+										errorMessages.add("GREŠKA: contains vraća false nakon uspešnog ubacivanja ");
+									} else {
+										errorMessages.add("GREŠKA: ubacivanje nije uspelo iako element nije unutra ");
+									}
 									synchronized (sample) {
 										sample.notifyAll();
 									}
@@ -135,10 +101,11 @@ public class IntSetProblemInstance {
 								boolean succeeded = intSet.removeInt(sample.value);
 								boolean contains = intSet.contains(sample.value);
 								if (contains && myPhase != SAMPLE_TESTING_PHASE.RANDOM) {
-									if (succeeded)
+									if (succeeded) {
 										errorMessages.add("GREŠKA: contains vraća true nakon uspešnog izbacivanja");
-									else
+									} else {
 										errorMessages.add("GREŠKA: izbacivanje nije uspelo iako je element unutra");
+									}
 									synchronized (sample) {
 										sample.notifyAll();
 									}
@@ -154,7 +121,8 @@ public class IntSetProblemInstance {
 								if (sample.numOfThreadsExecuting.get() == 1) {
 									// ja sam poslednji, i otvaram narednu fazu
 									if (!expectFalseReturns) {
-										// ako ne dozvoljavam false, treba da naredna vaza bude suprotna
+										// ako ne dozvoljavam false, treba da
+										// naredna vaza bude suprotna
 										if (!sample.currentPhase.compareAndSet(myPhase, myPhase.getOpposite()))
 											throw new RuntimeException("TesterException: phase not atomically changed");
 									} else {
