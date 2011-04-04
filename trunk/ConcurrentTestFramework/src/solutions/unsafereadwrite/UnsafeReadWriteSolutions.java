@@ -1,11 +1,13 @@
 package solutions.unsafereadwrite;
 
-import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import sun.misc.Unsafe;
 import useful.UnsafeHelper;
+import examples.unsafemutex.UnsafeMutex;
 import examples.unsafereadwrite.UnsafeReadWriteLock;
 import examples.unsafereadwrite.UnsafeReadWriteLockTester;
 
@@ -115,39 +117,44 @@ public class UnsafeReadWriteSolutions {
 				noReaders.unlock();
 		}
 		
-		final static class FairMutex {
-			final AtomicBoolean workingWithTheQueue = new AtomicBoolean(false);
-			final LinkedList<Thread> waitingList = new LinkedList<Thread>();
-			final Unsafe unsafe = UnsafeHelper.getUnsafe();
+		final static class FairMutex implements UnsafeMutex {
+			private static final int ARRAY_SIZE = 1000;
+			private final AtomicLong ticketDispenser = new AtomicLong(0);
+			private final AtomicLong currentCustomer = new AtomicLong(0);
+			private final AtomicReferenceArray<Thread> customersInLine = new AtomicReferenceArray<Thread>(ARRAY_SIZE);
+			private final Unsafe unsafe = UnsafeHelper.getUnsafe();
+			private final AtomicBoolean unlockingInProgress = new AtomicBoolean();
 			
+			@Override
 			public void lock() {
-				while (!workingWithTheQueue.compareAndSet(false, true))
+				long myTicket = ticketDispenser.getAndIncrement();
+				customersInLine.set((int) (myTicket % ARRAY_SIZE), Thread.currentThread());
+				while (unlockingInProgress.get() != false)
 					Thread.yield();
-				waitingList.addLast(Thread.currentThread());
-				while (waitingList.getFirst() != Thread.currentThread()) {
-					workingWithTheQueue.set(false);
-					
-					unsafe.park(false, 0);
-					
-					while (!workingWithTheQueue.compareAndSet(false, true))
-						Thread.yield();
+				while (currentCustomer.get() != myTicket) {
+					unsafe.park(false, 0l);
 				}
-				workingWithTheQueue.set(false);
+				customersInLine.set((int) (myTicket % ARRAY_SIZE), null);
 			}
 			
+			@Override
 			public void unlock() {
-				while (!workingWithTheQueue.compareAndSet(false, true))
-					Thread.yield();
-				
-				waitingList.removeFirst();
-				Thread otherThread = waitingList.isEmpty() ? null : waitingList.getFirst();
-				
-				workingWithTheQueue.set(false);
-				if (otherThread != null) {
-					while (otherThread.getState() != Thread.State.WAITING)
+				long myTicket = currentCustomer.get();
+				Thread nextToWakeUp = null;
+				unlockingInProgress.set(true);
+				if (ticketDispenser.get() > myTicket + 1) {
+					while ((nextToWakeUp = customersInLine.get((int) ((myTicket + 1) % ARRAY_SIZE))) == null)
 						Thread.yield();
-					unsafe.unpark(otherThread);
+					while (nextToWakeUp.getState() != Thread.State.WAITING) {
+						unlockingInProgress.set(false);
+						Thread.yield();
+						unlockingInProgress.set(true);
+					}
 				}
+				currentCustomer.incrementAndGet();
+				unlockingInProgress.set(false);
+				if (nextToWakeUp != null)
+					unsafe.unpark(nextToWakeUp);
 			}
 		}
 	}
