@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicMarkableReference;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -40,80 +41,6 @@ public class CopyOnWriteArraySolutions {
 				readWriteLock.unlockWrite();
 			}
 		}
-		
-		static class FairReadWriteLock implements UnsafeReadWriteLock {
-			
-			final FairMutex noWriters = new FairMutex();
-			final FairMutex noReaders = new FairMutex();
-			final AtomicInteger numberOfReaders = new AtomicInteger();
-			
-			@Override
-			public void lockWrite() {
-				noWriters.lock();
-				noReaders.lock();
-				noReaders.unlock();
-			}
-			
-			@Override
-			public void unlockWrite() {
-				noWriters.unlock();
-			}
-			
-			@Override
-			public void lockRead() {
-				noWriters.lock();
-				if (numberOfReaders.getAndIncrement() == 0)
-					noReaders.lock();
-				noWriters.unlock();
-			}
-			
-			@Override
-			public void unlockRead() {
-				if (numberOfReaders.decrementAndGet() == 0)
-					noReaders.unlock();
-			}
-			
-			final static class FairMutex implements UnsafeMutex {
-				private static final int ARRAY_SIZE = 1000;
-				private final AtomicLong ticketDispenser = new AtomicLong(0);
-				private final AtomicLong currentCustomer = new AtomicLong(0);
-				private final AtomicReferenceArray<Thread> customersInLine = new AtomicReferenceArray<Thread>(ARRAY_SIZE);
-				private final Unsafe unsafe = UnsafeHelper.getUnsafe();
-				private final AtomicBoolean unlockingInProgress = new AtomicBoolean();
-				
-				@Override
-				public void lock() {
-					long myTicket = ticketDispenser.getAndIncrement();
-					customersInLine.set((int) (myTicket % ARRAY_SIZE), Thread.currentThread());
-					while (unlockingInProgress.get() != false)
-						Thread.yield();
-					while (currentCustomer.get() != myTicket) {
-						unsafe.park(false, 0l);
-					}
-					customersInLine.set((int) (myTicket % ARRAY_SIZE), null);
-				}
-				
-				@Override
-				public void unlock() {
-					long myTicket = currentCustomer.get();
-					Thread nextToWakeUp = null;
-					unlockingInProgress.set(true);
-					if (ticketDispenser.get() > myTicket + 1) {
-						while ((nextToWakeUp = customersInLine.get((int) ((myTicket + 1) % ARRAY_SIZE))) == null)
-							Thread.yield();
-						while (nextToWakeUp.getState() != Thread.State.WAITING) {
-							unlockingInProgress.set(false);
-							Thread.yield();
-							unlockingInProgress.set(true);
-						}
-					}
-					currentCustomer.incrementAndGet();
-					unlockingInProgress.set(false);
-					if (nextToWakeUp != null)
-						unsafe.unpark(nextToWakeUp);
-				}
-			}
-		}
 	}
 	
 	public static class AtomicReferenceCopyOnWriteArray implements CopyOnWriteArray {
@@ -138,49 +65,53 @@ public class CopyOnWriteArraySolutions {
 			}
 		}
 		
-		final static class FairMutex implements UnsafeMutex {
-			private static final int ARRAY_SIZE = 1000;
-			private final AtomicLong ticketDispenser = new AtomicLong(0);
-			private final AtomicLong currentCustomer = new AtomicLong(0);
-			private final AtomicReferenceArray<Thread> customersInLine = new AtomicReferenceArray<Thread>(ARRAY_SIZE);
-			private final Unsafe unsafe = UnsafeHelper.getUnsafe();
-			private final AtomicBoolean unlockingInProgress = new AtomicBoolean();
-			
-			@Override
-			public void lock() {
-				long myTicket = ticketDispenser.getAndIncrement();
-				customersInLine.set((int) (myTicket % ARRAY_SIZE), Thread.currentThread());
-				while (unlockingInProgress.get() != false)
-					Thread.yield();
-				while (currentCustomer.get() != myTicket) {
-					unsafe.park(false, 0l);
-				}
-				customersInLine.set((int) (myTicket % ARRAY_SIZE), null);
-			}
-			
-			@Override
-			public void unlock() {
-				long myTicket = currentCustomer.get();
-				Thread nextToWakeUp = null;
-				unlockingInProgress.set(true);
-				if (ticketDispenser.get() > myTicket + 1) {
-					while ((nextToWakeUp = customersInLine.get((int) ((myTicket + 1) % ARRAY_SIZE))) == null)
-						Thread.yield();
-					while (nextToWakeUp.getState() != Thread.State.WAITING) {
-						unlockingInProgress.set(false);
-						Thread.yield();
-						unlockingInProgress.set(true);
-					}
-				}
-				currentCustomer.incrementAndGet();
-				unlockingInProgress.set(false);
-				if (nextToWakeUp != null)
-					unsafe.unpark(nextToWakeUp);
-			}
-		}
 	}
 	
 	public static class ChangeQueuingCopyOnWriteArray implements CopyOnWriteArray {
+		private final FairMutex mutex = new FairMutex();
+		private final AtomicReference<int[]> currentArray = new AtomicReference<int[]>(new int[100]);
+		private final AtomicMarkableReference<int[]> otherArray = new AtomicMarkableReference<int[]>(new int[100], false);
+		private final AtomicInteger indexOfChangeTicketDispenser = new AtomicInteger(0);
+		
+		@Override
+		public int[] get() {
+			return currentArray.get();
+		}
+		
+		@Override
+		public void set(int index, int value) {
+			boolean unlocked = false;
+			try {
+				mutex.lock();
+				int[] currentArray = this.currentArray.get();
+				int[] newArray = this.otherArray.getReference();
+				if (!otherArray.isMarked()) {
+					otherArray.attemptMark(newArray, true);
+					for (int i = 0; i < 100; i++)
+						newArray[i] = currentArray[i];
+					newArray[index] = value;
+					mutex.unlock();
+					mutex.lock();
+					otherArray.compareAndSet(newArray, currentArray, true, false);
+					this.currentArray.set(newArray);
+					indexOfChangeTicketDispenser.incrementAndGet();
+				} else {
+					int ticket = indexOfChangeTicketDispenser.get();
+					newArray[index] = value;
+					mutex.unlock();
+					unlocked = true;
+					while (indexOfChangeTicketDispenser.get() == ticket)
+						Thread.yield();
+				}
+			} finally {
+				if (!unlocked)
+					mutex.unlock();
+			}
+		}
+		
+	}
+	
+	public static class ChangeQueuingCopyOnWriteArray2 implements CopyOnWriteArray {
 		private final static int ARRAY_SIZE = 1000;
 		private final AtomicReferenceArray<Thread> threadsWaiting = new AtomicReferenceArray<Thread>(ARRAY_SIZE);
 		private final AtomicReference<int[]> currentArray = new AtomicReference<int[]>(new int[100]);
@@ -271,6 +202,81 @@ public class CopyOnWriteArraySolutions {
 				}
 			}
 		}
+	}
+	
+	final static class FairMutex implements UnsafeMutex {
+		private static final int ARRAY_SIZE = 1000;
+		private final AtomicLong ticketDispenser = new AtomicLong(0);
+		private final AtomicLong currentCustomer = new AtomicLong(0);
+		private final AtomicReferenceArray<Thread> customersInLine = new AtomicReferenceArray<Thread>(ARRAY_SIZE);
+		private final Unsafe unsafe = UnsafeHelper.getUnsafe();
+		private final AtomicBoolean unlockingInProgress = new AtomicBoolean();
+		
+		@Override
+		public void lock() {
+			long myTicket = ticketDispenser.getAndIncrement();
+			customersInLine.set((int) (myTicket % ARRAY_SIZE), Thread.currentThread());
+			while (unlockingInProgress.get() != false)
+				Thread.yield();
+			while (currentCustomer.get() != myTicket) {
+				unsafe.park(false, 0l);
+			}
+			customersInLine.set((int) (myTicket % ARRAY_SIZE), null);
+		}
+		
+		@Override
+		public void unlock() {
+			long myTicket = currentCustomer.get();
+			Thread nextToWakeUp = null;
+			unlockingInProgress.set(true);
+			if (ticketDispenser.get() > myTicket + 1) {
+				while ((nextToWakeUp = customersInLine.get((int) ((myTicket + 1) % ARRAY_SIZE))) == null)
+					Thread.yield();
+				while (nextToWakeUp.getState() != Thread.State.WAITING) {
+					unlockingInProgress.set(false);
+					Thread.yield();
+					unlockingInProgress.set(true);
+				}
+			}
+			currentCustomer.incrementAndGet();
+			unlockingInProgress.set(false);
+			if (nextToWakeUp != null)
+				unsafe.unpark(nextToWakeUp);
+		}
+	}
+	
+	static class FairReadWriteLock implements UnsafeReadWriteLock {
+		
+		final FairMutex noWriters = new FairMutex();
+		final FairMutex noReaders = new FairMutex();
+		final AtomicInteger numberOfReaders = new AtomicInteger();
+		
+		@Override
+		public void lockWrite() {
+			noWriters.lock();
+			noReaders.lock();
+			noReaders.unlock();
+		}
+		
+		@Override
+		public void unlockWrite() {
+			noWriters.unlock();
+		}
+		
+		@Override
+		public void lockRead() {
+			noWriters.lock();
+			if (numberOfReaders.getAndIncrement() == 0)
+				noReaders.lock();
+			noWriters.unlock();
+		}
+		
+		@Override
+		public void unlockRead() {
+			if (numberOfReaders.decrementAndGet() == 0)
+				noReaders.unlock();
+		}
+		
 	}
 	
 	public static void main(String[] args) {
