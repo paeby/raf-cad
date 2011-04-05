@@ -13,25 +13,27 @@
     <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;seminarski1.tester"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;core.impl.registers"/>
-        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.mutex"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common.registers"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.mutex"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;core"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.copyonwritearray"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.exchanger"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.crossing"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.copyonwriteset"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.tuple"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;useful"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;core.impl"/>
-        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;seminarski1"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.addition"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;seminarski1"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.consensus"/>
-        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.unsafequeue"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.queue"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.unsafequeue"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.unsafereadwrite"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.unsafemutex"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.counter"/>
-        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.readerswriter"/>
-        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.casn"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common.tasks"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.casn"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.readerswriter"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.gatherer"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.condition"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.balance"/>
