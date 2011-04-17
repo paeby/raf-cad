@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 
 import common.Utils;
 import common.problem.ProblemInstance;
+import common.problem.RandomizableProblemInstance;
 import common.problem.Solution;
 
 import core.impl.DistributedManagedSystemImpl;
@@ -20,6 +21,7 @@ public class ProblemTester {
 	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, Class<? extends S> solutionClass, int nodeCount, int density, int n) {
 		ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("workers"));
 		int[][] graph = null;
+		RandomizableProblemInstance<S> randomizableProblemInstance = ((problem instanceof RandomizableProblemInstance) ? (RandomizableProblemInstance<S>)problem : null); 
 		
 		Map<InstructionType, Integer> stats = new TreeMap<InstructionType, Integer>();
 		long sumTasks = 0;
@@ -31,6 +33,10 @@ public class ProblemTester {
 			if (graph == null || Math.random() < 0.1d) {
 				graph = density == 100 ? RandomNetworkGenerator.generateCliqueInfos(nodeCount) : RandomNetworkGenerator.generateNeighbourhoodInfos(nodeCount, density);
 			}
+			
+			if (randomizableProblemInstance != null)
+				randomizableProblemInstance.randomize();
+			
 			DistributedManagedSystemImpl system = new DistributedManagedSystemImpl(executor, graph);
 			boolean success = problem.execute(system, solutionClass);
 			

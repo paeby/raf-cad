@@ -17,7 +17,7 @@ public class PingEveryoneProblemInstance extends DefaultProblemInstance<PingEver
 				if (!hasSentAPing) {
 					solution.pingNeighbourhood();
 				}
-				while (!solution.hasBeenPinged()) {
+				while (solution.hasBeenPinged() < 10 * system.getProcessNeighbourhood().length) {
 					system.handleMessages(solution);
 				}
 				return TesterVerdict.SUCCESS;

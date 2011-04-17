@@ -8,25 +8,26 @@ import examples.pingeveryone.PingEveryoneTester;
 public class PingEveryoneSolutions {
 	public static final class PingEveryoneSolution implements PingEveryone {
 		private DistributedSystem system;
-		private boolean hasBeenPinged = false;
+		private int hasBeenPinged = 0;
 		
 		@Override
 		public void pingNeighbourhood() {
 			int[] neighbourhood = system.getProcessNeighbourhood();
-			for (int i = 0; i < neighbourhood.length; i++) {
-				system.sendMessage(neighbourhood[i], 0, "ping!");
-			}
+			for (int i = 0; i < 10; i++)
+				for (int j = 0; j < neighbourhood.length; j++) {
+					system.sendMessage(neighbourhood[j], 0, "ping!");
+				}
 		}
 		
 		@Override
 		public void messageReceived(int from, int type, Object message) {
-			hasBeenPinged = true;
+			hasBeenPinged++;
 		}
 		
 		@Override
-		public boolean hasBeenPinged() {
+		public int hasBeenPinged() {
 			return hasBeenPinged;
-		}	
+		}
 	}
 	
 	public static void main(String[] args) {
