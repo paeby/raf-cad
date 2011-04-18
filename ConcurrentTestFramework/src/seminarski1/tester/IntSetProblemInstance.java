@@ -71,7 +71,7 @@ public class IntSetProblemInstance {
 										// narednu fazu
 										sample.wait();
 										continue;
-									} else if (expectFalseReturns && sample.numOfThreadsExecuting.get() > 1) {
+									} else if (!expectFalseReturns && sample.numOfThreadsExecuting.get() > 0) {
 										// neko već radi u ovoj fazi, bolje da
 										// čekamo na narednu
 										sample.wait();
