@@ -16,7 +16,8 @@ import examples.unsafemutex.UnsafeMutex;
 public class CopyOnWriteSetSolutions {
 	
 	public static final class PositivelyWorkingCoWSet implements CopyOnWriteSet {
-		private final java.util.concurrent.CopyOnWriteArraySet<Integer> set = new java.util.concurrent.CopyOnWriteArraySet<Integer>();
+//		private final java.util.concurrent.CopyOnWriteArraySet<Integer> set = new java.util.concurrent.CopyOnWriteArraySet<Integer>();
+		private final java.util.concurrent.ConcurrentSkipListSet<Integer> set = new java.util.concurrent.ConcurrentSkipListSet<Integer>();
 		
 		@Override
 		public boolean add(int value) {
@@ -686,6 +687,6 @@ public class CopyOnWriteSetSolutions {
 	}
 	
 	public static void main(String[] args) {
-		CopyOnWriteSetTester.testCopyOnWriteSet(new CopyOnWriteTreeSet());
+		CopyOnWriteSetTester.testCopyOnWriteSet(new PositivelyWorkingCoWSet());
 	}
 }
