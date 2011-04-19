@@ -1,6 +1,6 @@
 package core;
 
-public interface Message {
+public interface MessageBundle {
 	
 	public int getFrom();
 	
@@ -9,5 +9,4 @@ public interface Message {
 	public int getType();
 	
 	public Object getMsg();
-	
 }

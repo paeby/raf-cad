@@ -3,16 +3,16 @@ package core.impl.message;
 import java.util.LinkedList;
 import java.util.Random;
 
-import core.Message;
+import core.MessageBundle;
 import core.MessageQueue;
 
 public class RandomMessageQueue implements MessageQueue {
-	private final LinkedList<Message> messages = new LinkedList<Message>();
+	private final LinkedList<MessageBundle> messages = new LinkedList<MessageBundle>();
 	private final Random random = new Random(); // threadlocal jer postoji jedan
 												// queue po threadu
 	
 	@Override
-	public void add(Message message) {
+	public void add(MessageBundle message) {
 		messages.add(random.nextInt(messages.size() + 1), message);
 	}
 	
@@ -22,7 +22,7 @@ public class RandomMessageQueue implements MessageQueue {
 	}
 	
 	@Override
-	public Message getMessage() {
+	public MessageBundle getMessage() {
 		if (messages.isEmpty())
 			return null;
 		else

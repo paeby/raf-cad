@@ -2,7 +2,7 @@ package util;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class RandomMessage {
+public class RandomMessage implements Cloneable {
 	private static final AtomicInteger idDispenser = new AtomicInteger();
 	private final int id;
 	

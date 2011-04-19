@@ -19,9 +19,9 @@ import common.problem.Solution;
 import common.tasks.Task;
 
 import core.DistributedManagedSystem;
-import core.Message;
+import core.MessageBundle;
 import core.MessageQueue;
-import core.impl.message.MessageImpl;
+import core.impl.message.MessageBundleImpl;
 import core.impl.message.RandomMessageQueue;
 
 public class DistributedManagedSystemImpl implements DistributedManagedSystem {
@@ -83,7 +83,8 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	@Override
 	public void sendMessage(int destinationId, int type, Object message) {
 		ProcessInfo myInfo = getProcessInfo();
-		Message msg = new MessageImpl(myInfo.processId, destinationId, type, message);
+//		Object msgClone = ObjectHelper.clone(message);
+		MessageBundle msg = new MessageBundleImpl(myInfo.processId, destinationId, type, message);
 		if (Arrays.binarySearch(myInfo.neighbourhoodUsingIds, destinationId) < 0)
 			throw new IllegalArgumentException("Process " + myInfo.processId + " ne može da šalje poruke procesu " + destinationId + " koji mu je van susedstva");
 		else {
@@ -108,7 +109,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 		ProcessInfo myInfo = getProcessInfo();
 		actionCalled();
 		while (!myInfo.messageQueue.isEmpty()) {
-			Message message = myInfo.messageQueue.getMessage();
+			MessageBundle message = myInfo.messageQueue.getMessage();
 			solution.messageReceived(message.getFrom(), message.getType(), message.getMsg());
 			actionCalled();
 		}

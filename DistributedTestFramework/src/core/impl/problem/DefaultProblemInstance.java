@@ -1,5 +1,6 @@
 package core.impl.problem;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -51,13 +52,20 @@ public abstract class DefaultProblemInstance<T extends Solution> implements Prob
 		return null;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private T createInstance(DistributedManagedSystem system, Class<? extends T> solutionClass) {
+		for (Constructor<?> c : solutionClass.getConstructors())
+			if (c.getParameterTypes().length == 1 && c.getParameterTypes()[0] == DistributedSystem.class)
+				try {
+					return (T) c.newInstance(system);
+				} catch (Exception e) {
+					throw new RuntimeException("Solution not instantiated", e);
+				}
+		
 		T mySolution;
 		try {
 			mySolution = solutionClass.newInstance();
-		} catch (InstantiationException e) {
-			throw new IllegalArgumentException("Solution not instantiated", e);
-		} catch (IllegalAccessException e) {
+		} catch (Exception e) {
 			throw new IllegalArgumentException("Solution not instantiated", e);
 		}
 		for (Field field : solutionClass.getDeclaredFields()) {
