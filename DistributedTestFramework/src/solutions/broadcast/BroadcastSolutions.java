@@ -5,7 +5,7 @@ import common.DistributedSystem;
 import examples.broadcast.Broadcast;
 import examples.broadcast.BroadcastTester;
 
-public class BroadcastSolution {
+public class BroadcastSolutions {
 	public static class NonworkingBroadcastSolution implements Broadcast {
 		volatile Object msg;
 		

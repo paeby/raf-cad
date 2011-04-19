@@ -24,8 +24,9 @@ public abstract class DefaultProblemInstance<T extends Solution> implements Prob
 			managedSystem.startTaskConcurrently(new Task() {
 				@Override
 				public void execute(DistributedManagedSystem system) {
+					system.setMySolution(mySolution);
 					SingleProcessTester<T> myTester = createSingleProcessTester(system, mySolution, threadIndex);
-					system.handleMessages(mySolution);
+					system.handleMessages();
 					if (myTester != null) {
 						TesterVerdict verdict = myTester.test(system, mySolution);
 						switch (verdict) {

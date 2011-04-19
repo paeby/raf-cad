@@ -83,7 +83,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	@Override
 	public void sendMessage(int destinationId, int type, Object message) {
 		ProcessInfo myInfo = getProcessInfo();
-//		Object msgClone = ObjectHelper.clone(message);
+		// Object msgClone = ObjectHelper.clone(message);
 		MessageBundle msg = new MessageBundleImpl(myInfo.processId, destinationId, type, message);
 		if (Arrays.binarySearch(myInfo.neighbourhoodUsingIds, destinationId) < 0)
 			throw new IllegalArgumentException("Process " + myInfo.processId + " ne može da šalje poruke procesu " + destinationId + " koji mu je van susedstva");
@@ -101,16 +101,16 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	
 	@Override
 	public void yield() {
-		actionCalled();
+		handleMessages();
 	}
 	
 	@Override
-	public void handleMessages(Solution solution) {
+	public void handleMessages() {
 		ProcessInfo myInfo = getProcessInfo();
 		actionCalled();
 		while (!myInfo.messageQueue.isEmpty()) {
 			MessageBundle message = myInfo.messageQueue.getMessage();
-			solution.messageReceived(message.getFrom(), message.getType(), message.getMsg());
+			myInfo.solution.get().messageReceived(message.getFrom(), message.getType(), message.getMsg());
 			actionCalled();
 		}
 	}
@@ -320,6 +320,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 		private final int[] neighbourhoodUsingIds;
 		private final MessageQueue messageQueue;
 		private final Object monitor;
+		private final AtomicReference<Solution> solution;
 		
 		public ProcessInfo(int[] neighbourhood, int processIndex) {
 			int pId = 0;
@@ -339,6 +340,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			this.neighbourhood = neighbourhood;
 			this.neighbourhoodUsingIds = new int[neighbourhood.length];
 			this.monitor = new Object();
+			this.solution = new AtomicReference<Solution>(null);
 		}
 		
 		@Override
@@ -350,5 +352,11 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			else
 				return 0;
 		}
+	}
+
+	@Override
+	public void setMySolution(Solution solution) {
+		if (!getProcessInfo().solution.compareAndSet(null, solution))
+			throw new IllegalStateException("Solution already set!");
 	}
 }

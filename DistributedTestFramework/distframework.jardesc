@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="DistributedTestFramework/distframework.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/DistributedTestFramework/distframework.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core.impl"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;common.problem"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;examples.neighbourcounter"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core.impl.message"/>
+        <file path="/DistributedTestFramework/.project"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;common"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;examples.causalbroadcast"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core.network"/>
+        <file path="/DistributedTestFramework/.classpath"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;examples.messagepassingexample"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;examples.broadcast"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;common.tasks"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core.impl.problem"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;examples.pingeveryone"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;util"/>
+    </selectedElements>
+</jardesc>
