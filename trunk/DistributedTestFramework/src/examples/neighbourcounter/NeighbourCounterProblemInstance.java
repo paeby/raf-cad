@@ -15,12 +15,12 @@ public class NeighbourCounterProblemInstance extends DefaultProblemInstance<Neig
 				solution.pingNeighbours();
 				TimeoutCounter tc = new TimeoutCounter(500);
 				while (solution.getNumberOfMessagesReceived() < system.getProcessNeighbourhood().length) {
-					system.handleMessages(solution);
+					system.handleMessages();
 					if (tc.timeRanOut())
 						return TesterVerdict.TIMEOUT;
 				}
 				system.yield();
-				system.handleMessages(solution);
+				system.handleMessages();
 				if (solution.getNumberOfMessagesReceived() > system.getProcessNeighbourhood().length)
 					return TesterVerdict.FAIL;
 				return TesterVerdict.SUCCESS;

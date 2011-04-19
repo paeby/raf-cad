@@ -1,6 +1,7 @@
 package core;
 
 import common.DistributedSystem;
+import common.problem.Solution;
 import common.tasks.Task;
 
 import core.impl.InstructionType;
@@ -22,5 +23,7 @@ public interface DistributedManagedSystem extends DistributedSystem {
 	
 	int getNumberOfNodes();
 	
-	public void yield();
+	public void handleMessages();
+
+	void setMySolution(Solution solution);
 }

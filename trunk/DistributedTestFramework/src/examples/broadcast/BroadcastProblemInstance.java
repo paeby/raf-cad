@@ -33,7 +33,7 @@ public class BroadcastProblemInstance extends DefaultProblemInstance<Broadcast> 
 				} else {
 					TimeoutCounter counter = new TimeoutCounter(500);
 					while (!counter.timeRanOut()) {
-						system.handleMessages(solution);
+						system.handleMessages();
 						Object received = solution.getBroadcastedMessage();
 						if (received != null)
 							if (received.equals(msg))

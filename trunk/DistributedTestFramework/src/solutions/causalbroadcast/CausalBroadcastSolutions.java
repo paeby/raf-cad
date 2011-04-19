@@ -49,7 +49,7 @@ public class CausalBroadcastSolutions {
 			for (int neighbour : system.getProcessNeighbourhood())
 				system.sendMessage(neighbour, 0, msg);
 			while (waitForHowManyToSendMePriority > 0)
-				system.handleMessages(this);
+				system.yield();
 			maxPriority++;
 			for (int neighbour : system.getProcessNeighbourhood())
 				system.sendMessage(neighbour, 2, new Message(msg, maxPriority, true));
