@@ -15,7 +15,7 @@ public class BroadcastSolution {
 		}
 		
 		@Override
-		public Object getBroadcastedObject() {
+		public Object getBroadcastedMessage() {
 			return msg;
 		}
 		
@@ -43,7 +43,7 @@ public class BroadcastSolution {
 		}
 		
 		@Override
-		public Object getBroadcastedObject() {
+		public Object getBroadcastedMessage() {
 			return msg;
 		}
 	}
@@ -68,7 +68,7 @@ public class BroadcastSolution {
 		}
 		
 		@Override
-		public Object getBroadcastedObject() {
+		public Object getBroadcastedMessage() {
 			return msg;
 		}
 	}

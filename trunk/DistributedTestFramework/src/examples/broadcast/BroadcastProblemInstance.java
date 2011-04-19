@@ -25,7 +25,7 @@ public class BroadcastProblemInstance extends DefaultProblemInstance<Broadcast> 
 			public TesterVerdict test(DistributedManagedSystem system, Broadcast solution) {
 				if (threadIndex == 0) {
 					solution.broadcast(msg);
-					Object result = solution.getBroadcastedObject();
+					Object result = solution.getBroadcastedMessage();
 					if (result == null || !result.equals(msg))
 						return TesterVerdict.FAIL;
 					else
@@ -34,7 +34,7 @@ public class BroadcastProblemInstance extends DefaultProblemInstance<Broadcast> 
 					TimeoutCounter counter = new TimeoutCounter(500);
 					while (!counter.timeRanOut()) {
 						system.handleMessages(solution);
-						Object received = solution.getBroadcastedObject();
+						Object received = solution.getBroadcastedMessage();
 						if (received != null)
 							if (received.equals(msg))
 								return TesterVerdict.SUCCESS;

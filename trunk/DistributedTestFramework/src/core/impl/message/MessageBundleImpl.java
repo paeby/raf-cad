@@ -1,18 +1,19 @@
 package core.impl.message;
 
-import core.Message;
+import core.MessageBundle;
 
-public class MessageImpl implements Message {
+public class MessageBundleImpl implements MessageBundle {
 	private final int from, to, type;
 	private final Object msg;
 	
-	public MessageImpl(int from, int to, int type, Object msg) {
+	public MessageBundleImpl(int from, int to, int type, Object msg) {
 		super();
 		this.from = from;
 		this.to = to;
 		this.type = type;
 		this.msg = msg;
 	}
+	
 	@Override
 	public int getFrom() {
 		return from;
@@ -32,5 +33,4 @@ public class MessageImpl implements Message {
 	public Object getMsg() {
 		return msg;
 	}
-	
 }

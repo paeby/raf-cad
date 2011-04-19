@@ -15,7 +15,7 @@ public class PingEveryoneSolutions {
 			int[] neighbourhood = system.getProcessNeighbourhood();
 			for (int i = 0; i < 10; i++)
 				for (int j = 0; j < neighbourhood.length; j++) {
-					system.sendMessage(neighbourhood[j], 0, "ping!");
+					system.sendMessage(neighbourhood[j], 0, null);
 				}
 		}
 		

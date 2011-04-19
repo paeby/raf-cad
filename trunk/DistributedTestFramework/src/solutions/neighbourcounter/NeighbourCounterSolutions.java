@@ -35,14 +35,15 @@ public class NeighbourCounterSolutions {
 		@Override
 		public void messageReceived(int from, int type, Object message) {}
 	}
+	
 	public static class NeighbourCounterSolutionExpected implements NeighbourCounter {
 		DistributedSystem system;
 		int count = 0;
 		
 		@Override
 		public void pingNeighbours() {
-			for (int neighbourId: system.getProcessNeighbourhood())
-				system.sendMessage(neighbourId, 0, "Ping!");
+			for (int neighbourId : system.getProcessNeighbourhood())
+				system.sendMessage(neighbourId, 0, null);
 		}
 		
 		@Override
@@ -55,6 +56,7 @@ public class NeighbourCounterSolutions {
 			count++;
 		}
 	}
+	
 	public static void main(String[] args) {
 		NeighbourCounterTester.testNeighbourCounter(NeighbourCounterSolutionExpected.class);
 	}
