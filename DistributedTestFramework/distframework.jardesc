@@ -13,19 +13,22 @@
     <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core.impl"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;common.problem"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;examples.neighbourcounter"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core.impl.message"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.util"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.pingeveryone"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.messagepassingexample"/>
         <file path="/DistributedTestFramework/.project"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;common"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;examples.causalbroadcast"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core.network"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.common"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.common.problem"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.broadcast"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core.impl.message"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core.impl"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core.impl.problem"/>
         <file path="/DistributedTestFramework/.classpath"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;examples.messagepassingexample"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;examples.broadcast"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;common.tasks"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core.impl.problem"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;examples.pingeveryone"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;util"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.neighbourcounter"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.common.tasks"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core.network"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.causalbroadcast"/>
     </selectedElements>
 </jardesc>
