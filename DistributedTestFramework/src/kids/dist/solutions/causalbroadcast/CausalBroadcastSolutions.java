@@ -123,7 +123,7 @@ public class CausalBroadcastSolutions {
 		final DistributedSystem system;
 		final TreeMap<Integer, Integer> myClockVector;
 		final Queue<PendingQueueItem> pending = new LinkedList<PendingQueueItem>();
-		final List<Object> receivedMessages = new ArrayList<Object>();
+		final List<Object> commitedMessages = new ArrayList<Object>();
 		
 		public VectorClockCausalBroadcast(DistributedSystem system) {
 			this.system = system;
@@ -147,7 +147,7 @@ public class CausalBroadcastSolutions {
 		
 		@Override
 		public void broadcast(Object msg) {
-			receivedMessages.add(msg);
+			commitedMessages.add(msg);
 			Object myVectorClone = myClockVector.clone();
 			for (int neighbour : system.getProcessNeighbourhood())
 				system.sendMessage(neighbour, 0, new Object[] {
@@ -161,30 +161,35 @@ public class CausalBroadcastSolutions {
 		public void messageReceived(int from, int type, Object message) {
 			Object[] array = (Object[]) message;
 			pending.add(new PendingQueueItem(from, ((TreeMap<Integer, Integer>) array[0]), array[1]));
-			acceptAllPendingFromQueue();
+			commitCommitablePendingQueueItems();
 		}
 		
-		void acceptAllPendingFromQueue() {
-			boolean somethingChanged;
-			do {
-				somethingChanged = false;
+		/*
+		 * ovo je ovako rešeno da bi uvek commit-ovao prvu poruku koju mogu da
+		 * commit-ujem. ako pronađem neku poruku spremnu za commit, ponovo
+		 * počinjem iteriranje ispočetka jer se možda neka poruka koju sam
+		 * primio ranije otvorila za commit. Ovo ne mora ovako da se reši, samo
+		 * je malo više fair na neki način.
+		 */
+		void commitCommitablePendingQueueItems() {
+			restart: while (true) {
 				Iterator<PendingQueueItem> queueItemIterator = pending.iterator();
 				while (queueItemIterator.hasNext()) {
 					PendingQueueItem queueItem = queueItemIterator.next();
 					if (vectorGreaterOrEqual(myClockVector, queueItem.vector)) {
-						receivedMessages.add(queueItem.message);
+						commitedMessages.add(queueItem.message);
 						increment(queueItem.from);
-						
 						queueItemIterator.remove();
-						somethingChanged = true;
+						continue restart;
 					}
 				}
-			} while (somethingChanged);
+				break;
+			}
 		}
 		
 		@Override
 		public List<Object> getReceivedMessages() {
-			return receivedMessages;
+			return commitedMessages;
 		}
 		
 		static class PendingQueueItem {
