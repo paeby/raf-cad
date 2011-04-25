@@ -23,7 +23,7 @@ public class CausalBroadcastProblemInstance extends DefaultProblemInstance<Causa
 	}
 	
 	@Override
-	public void randomize() {
+	public void randomize(DistributedManagedSystem system) {
 		messages.clear();
 		for (int i = 0; i < numberOfMessages; i++)
 			messages.add(new RandomMessage());

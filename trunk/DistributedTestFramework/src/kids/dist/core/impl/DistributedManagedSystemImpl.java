@@ -90,6 +90,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			actionCalled();
 			for (ProcessInfo info : processInfos) {
 				if (info.processId == destinationId) {
+					addLogLine("Process #" + myInfo.processId + " has sent a message to " + destinationId + " of type " + type + ": " + message);
 					info.messageQueue.add(msg);
 					return;
 				}
@@ -109,6 +110,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 		actionCalled();
 		while (!myInfo.messageQueue.isEmpty()) {
 			MessageBundle message = myInfo.messageQueue.getMessage();
+			addLogLine("Process #" + myInfo.processId + " has received a message from " + message.getFrom() + " of type " + message.getType() + ": " + message.getMsg());
 			myInfo.solution.get().messageReceived(message.getFrom(), message.getType(), message.getMsg());
 			actionCalled();
 		}
@@ -153,6 +155,14 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	@Override
 	public void actionCalled() {
 		Object monitor = getMonitor();
+		
+		ProcessInfo info = getProcessInfo();
+		if (info.timebombTicks > 0) {
+			info.timebombTicks--;
+		} else if (info.timebombTicks == 0) {
+			addLogLine("Process #" + info.processId + " abruptly terminated!");
+			throw new FrameworkDecidedToKillProcessException();
+		}
 		
 		if (transactionActive.get()) {
 			if (current.get() != monitor)
@@ -320,13 +330,16 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 		private final MessageQueue messageQueue;
 		private final Object monitor;
 		private final AtomicReference<Solution> solution;
+		private int timebombTicks = -1;
 		
 		public ProcessInfo(int[] neighbourhood, int processIndex) {
+			if (processIndex >= 9000)
+				throw new IllegalArgumentException("Too many processes!");
 			int pId = 0;
 			boolean unique = false;
 			while (!unique) {
 				unique = true;
-				pId = rand.nextInt();
+				pId = rand.nextInt(9000) + 1000;
 				for (ProcessInfo pInfo : processInfos)
 					if (pInfo.processId == pId) {
 						unique = false;
@@ -352,10 +365,19 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 				return 0;
 		}
 	}
-
+	
 	@Override
 	public void setMySolution(Solution solution) {
 		if (!getProcessInfo().solution.compareAndSet(null, solution))
 			throw new IllegalStateException("Solution already set!");
+	}
+	
+	@Override
+	public void setTimebombForThisThread(int ticks) {
+		if (ticks == 0) {
+			addLogLine("Process #" + getProcessId() + " abruptly terminated!");
+			throw new FrameworkDecidedToKillProcessException();
+		}
+		getProcessInfo().timebombTicks = ticks;
 	}
 }
