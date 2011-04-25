@@ -25,4 +25,6 @@ public interface DistributedManagedSystem extends DistributedSystem {
 	public void handleMessages();
 
 	void setMySolution(Solution solution);
+	
+	void setTimebombForThisThread(int ticks);
 }

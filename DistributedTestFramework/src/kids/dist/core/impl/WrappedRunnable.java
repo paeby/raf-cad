@@ -17,7 +17,7 @@ public class WrappedRunnable implements Runnable {
 	@Override
 	public void run() {
 		system.taskStarted();
-		system.addLogLine("started task=" + task);
+//		system.addLogLine("started task=" + task);
 		
 		task.execute(system);
 		

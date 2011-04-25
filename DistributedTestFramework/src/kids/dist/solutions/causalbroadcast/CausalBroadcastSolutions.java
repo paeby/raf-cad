@@ -1,10 +1,10 @@
 package kids.dist.solutions.causalbroadcast;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.TreeMap;
@@ -35,34 +35,46 @@ public class CausalBroadcastSolutions {
 		}
 	}
 	
+	/**
+	 * http://www2.cs.uidaho.edu/~krings/CS449/Notes.F05/449-05-19.pdf
+	 * @author Bocete
+	 *
+	 */
 	public static class ThreeWayHandshakeCausalBroadcast implements CausalBroadcast {
-		List<Object> receivedMessages = new LinkedList<Object>();
 		DistributedSystem system;
+		List<Object> receivedMessages = new LinkedList<Object>();
+		
 		LinkedList<Message> messagesQueue = new LinkedList<Message>();
 		int waitForHowManyToSendMePriority;
-		int maxPriority = 0;
+		int maxPriority;
+		int myMsgIndex = 0;
 		
 		@Override
 		public void broadcast(Object msg) {
+			int myId = system.getProcessId();
+			maxPriority = messagesQueue.isEmpty() ? 0 : messagesQueue.getLast().priority + 1;
+			int msgIndex = myMsgIndex++;
+			
 			waitForHowManyToSendMePriority = system.getProcessNeighbourhood().length;
+			Object[] packed = new Object[] { msg, myId, msgIndex };
 			for (int neighbour : system.getProcessNeighbourhood())
-				system.sendMessage(neighbour, 0, msg);
+				system.sendMessage(neighbour, 0, packed);
 			while (waitForHowManyToSendMePriority > 0)
 				system.yield();
+			
 			maxPriority++;
 			for (int neighbour : system.getProcessNeighbourhood())
-				system.sendMessage(neighbour, 2, new Message(msg, maxPriority, true));
+				system.sendMessage(neighbour, 2, new Message(msg, maxPriority, true, myId, msgIndex));
 			receivedMessages.add(msg);
 		}
 		
 		@Override
 		public void messageReceived(int from, int type, Object message) {
 			if (type == 0) {
+				Object[] packed = (Object[]) message;
 				// zahtevanje id-a.
-				int priority = maxPriority; // messagesQueue.isEmpty() ? 0 :
-											// messagesQueue.getLast().priority
-											// + 1;
-				messagesQueue.add(new Message(message, priority, false));
+				int priority = messagesQueue.isEmpty() ? 0 : messagesQueue.getLast().priority + 1;
+				messagesQueue.add(new Message(packed[0], priority, false, (Integer) packed[1], (Integer) packed[2]));
 				system.sendMessage(from, 1, priority);
 			} else if (type == 1) {
 				// primio sam id od nekoga
@@ -71,19 +83,26 @@ public class CausalBroadcastSolutions {
 			} else if (type == 2) {
 				
 				// izbacivanje ove iste poruke sa starim prioritetom iz queue-a
-				Iterator<Message> queueIterator = messagesQueue.iterator();
+				ListIterator<Message> queueIterator = messagesQueue.listIterator();
+				Message receivedMessage = (Message) message;
 				while (true) {
 					if (!queueIterator.hasNext())
 						throw new IllegalStateException("Poruka nije pronadjena!");
 					Message msgInQueue = queueIterator.next();
-					if (msgInQueue.msg.equals(((Message) message).msg)) {
+					if (msgInQueue.fromId == receivedMessage.fromId && msgInQueue.fromIndex == receivedMessage.fromIndex) {
 						queueIterator.remove();
+						while (queueIterator.hasNext() && msgInQueue.priority < receivedMessage.priority)
+							msgInQueue = queueIterator.next();
+						if (!queueIterator.hasNext())
+							queueIterator.add(receivedMessage);
+						else {
+							queueIterator.previous();
+							queueIterator.add(receivedMessage);
+						}
 						break;
 					}
 				}
 				
-				messagesQueue.add((Message) message);
-				Collections.sort(messagesQueue);
 				while (!messagesQueue.isEmpty() && messagesQueue.getFirst().deliverable) {
 					receivedMessages.add(messagesQueue.removeFirst().msg);
 				}
@@ -99,12 +118,16 @@ public class CausalBroadcastSolutions {
 			public final Object msg;
 			public final int priority;
 			public final boolean deliverable;
+			public final int fromId;
+			public final int fromIndex;
 			
-			public Message(Object msg, int priority, boolean deliverable) {
+			public Message(Object msg, int priority, boolean deliverable, int fromId, int fromIndex) {
 				super();
 				this.msg = msg;
 				this.priority = priority;
 				this.deliverable = deliverable;
+				this.fromId = fromId;
+				this.fromIndex = fromIndex;
 			}
 			
 			@Override
@@ -120,15 +143,10 @@ public class CausalBroadcastSolutions {
 	}
 	
 	public static class VectorClockCausalBroadcast implements CausalBroadcast {
-		final DistributedSystem system;
-		final TreeMap<Integer, Integer> myClockVector;
+		DistributedSystem system;
+		final TreeMap<Integer, Integer> myClockVector = new TreeMap<Integer, Integer>();
 		final Queue<PendingQueueItem> pending = new LinkedList<PendingQueueItem>();
 		final List<Object> commitedMessages = new ArrayList<Object>();
-		
-		public VectorClockCausalBroadcast(DistributedSystem system) {
-			this.system = system;
-			this.myClockVector = new TreeMap<Integer, Integer>();
-		}
 		
 		boolean vectorGreaterOrEqual(TreeMap<Integer, Integer> v1, TreeMap<Integer, Integer> v2) {
 			for (Entry<Integer, Integer> entry : v2.entrySet())
@@ -207,6 +225,6 @@ public class CausalBroadcastSolutions {
 	}
 	
 	public static void main(String[] args) {
-		CausalBroadcastTester.testBroadcastOnCliqueOnly(VectorClockCausalBroadcast.class);
+		CausalBroadcastTester.testBroadcastOnCliqueOnly(ThreeWayHandshakeCausalBroadcast.class);
 	}
 }

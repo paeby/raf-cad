@@ -12,7 +12,7 @@ public class BroadcastProblemInstance extends DefaultProblemInstance<Broadcast> 
 	Object msg;
 	
 	@Override
-	public void randomize() {
+	public void randomize(DistributedManagedSystem system) {
 		msg = new RandomMessage();
 	}
 	

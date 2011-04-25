@@ -33,10 +33,10 @@ public class ProblemTester {
 				graph = density == 100 ? RandomNetworkGenerator.generateCliqueInfos(nodeCount) : RandomNetworkGenerator.generateNeighbourhoodInfos(nodeCount, density);
 			}
 			
-			if (randomizableProblemInstance != null)
-				randomizableProblemInstance.randomize();
-			
 			DistributedManagedSystemImpl system = new DistributedManagedSystemImpl(executor, graph);
+			
+			if (randomizableProblemInstance != null)
+				randomizableProblemInstance.randomize(system);
 			boolean success = problem.execute(system, solutionClass);
 			
 			if (!success) {
