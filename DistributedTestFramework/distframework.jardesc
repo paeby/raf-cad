@@ -11,24 +11,23 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;core.impl"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.consensus"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.nodecounter"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.util"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.pingeveryone"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.messagepassingexample"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core"/>
         <file path="/DistributedTestFramework/.project"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;common"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.common"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.common.problem"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.broadcast"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.twomanconsensus"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core.impl.message"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core.impl"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core.impl.problem"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core.impl"/>
         <file path="/DistributedTestFramework/.classpath"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.neighbourcounter"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.common.tasks"/>
-        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core.network"/>
         <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.examples.causalbroadcast"/>
+        <javaElement handleIdentifier="=DistributedTestFramework/src&lt;kids.dist.core.network"/>
     </selectedElements>
 </jardesc>
