@@ -54,7 +54,7 @@ public class CausalBroadcastProblemInstance extends DefaultProblemInstance<Causa
 					for (Object msg : messages)
 						solution.broadcast(msg);
 				}
-				TimeoutCounter counter = new TimeoutCounter(500);
+				TimeoutCounter counter = new TimeoutCounter(2000);
 				while (!counter.timeRanOut()) {
 					system.handleMessages();
 					List<Object> receivedMessages = solution.getReceivedMessages();

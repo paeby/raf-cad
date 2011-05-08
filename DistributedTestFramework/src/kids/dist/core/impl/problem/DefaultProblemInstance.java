@@ -2,6 +2,7 @@ package kids.dist.core.impl.problem;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import kids.dist.common.DistributedSystem;
 import kids.dist.common.problem.InitiableSolution;
@@ -17,6 +18,7 @@ public abstract class DefaultProblemInstance<T extends Solution> implements Prob
 		int numOfNodes = managedSystem.getNumberOfNodes();
 		
 		final AtomicBoolean allOk = new AtomicBoolean(true);
+		final AtomicInteger countAlive = new AtomicInteger(numOfNodes);
 		
 		for (int i = 0; i < numOfNodes; i++) {
 			final int threadIndex = i;
@@ -35,17 +37,21 @@ public abstract class DefaultProblemInstance<T extends Solution> implements Prob
 							switch (verdict) {
 							case FAIL:
 								allOk.set(false);
-								return;
+								break;
 							case TIMEOUT:
 								system.addLogLine("Previše vremena je prošlo bez tačnog odgovora");
 								allOk.set(false);
-								return;
+								break;
 							case SUCCESS:
-								return;
+								break;
 							}
 						}
 					} catch (FrameworkDecidedToKillProcessException ex) {
 						return;
+					} finally {
+						countAlive.decrementAndGet();
+						while (countAlive.get() > 0)
+							system.handleMessages();
 					}
 				}
 			});

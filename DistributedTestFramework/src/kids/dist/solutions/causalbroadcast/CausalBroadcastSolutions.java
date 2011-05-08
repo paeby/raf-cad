@@ -225,6 +225,6 @@ public class CausalBroadcastSolutions {
 	}
 	
 	public static void main(String[] args) {
-		CausalBroadcastTester.testBroadcastOnCliqueOnly(ThreeWayHandshakeCausalBroadcast.class);
+		CausalBroadcastTester.testBroadcastOnCliqueOnly(VectorClockCausalBroadcast.class);
 	}
 }
