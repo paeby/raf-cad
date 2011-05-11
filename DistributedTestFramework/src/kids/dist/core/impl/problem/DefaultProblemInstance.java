@@ -26,6 +26,7 @@ public abstract class DefaultProblemInstance<T extends Solution> implements Prob
 			managedSystem.startTaskConcurrently(new Task() {
 				@Override
 				public void execute(DistributedManagedSystem system) {
+					RuntimeException ex = null;
 					try {
 						system.setMySolution(mySolution);
 						if (mySolution instanceof InitiableSolution)
@@ -46,9 +47,15 @@ public abstract class DefaultProblemInstance<T extends Solution> implements Prob
 								break;
 							}
 						}
-					} catch (FrameworkDecidedToKillProcessException ex) {
+					} catch (FrameworkDecidedToKillProcessException exc) {
+						return;
+					} catch (RuntimeException thr) {
+						ex = thr;
 						return;
 					} finally {
+						if (ex != null)
+							throw ex;
+						
 						countAlive.decrementAndGet();
 						while (countAlive.get() > 0)
 							system.handleMessages();
