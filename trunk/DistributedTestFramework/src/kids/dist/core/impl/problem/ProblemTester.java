@@ -16,29 +16,33 @@ import kids.dist.core.impl.NamedThreadFactory;
 import kids.dist.core.network.RandomNetworkGenerator;
 
 public class ProblemTester {
-	
+
 	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, Class<? extends S> solutionClass, int nodeCount, int density, int n) {
+		return testProblem(problem, solutionClass, false, nodeCount, density, n);
+	}
+
+	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, Class<? extends S> solutionClass, boolean useFifoQueues, int nodeCount, int density, int n) {
 		ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("workers"));
 		int[][] graph = null;
-		RandomizableProblemInstance<S> randomizableProblemInstance = ((problem instanceof RandomizableProblemInstance) ? (RandomizableProblemInstance<S>)problem : null); 
-		
+		RandomizableProblemInstance<S> randomizableProblemInstance = ((problem instanceof RandomizableProblemInstance) ? (RandomizableProblemInstance<S>) problem : null);
+
 		Map<InstructionType, Integer> stats = new TreeMap<InstructionType, Integer>();
 		long sumTasks = 0;
 		long sumSteps = 0;
-		
+
 		double numberOfDots = 20;
 		double accumulatedDots = 0;
 		for (int i = 0; i < n; i++) {
 			if (graph == null || Math.random() < 0.1d) {
 				graph = density == 100 ? RandomNetworkGenerator.generateCliqueInfos(nodeCount) : RandomNetworkGenerator.generateNeighbourhoodInfos(nodeCount, density);
 			}
-			
-			DistributedManagedSystemImpl system = new DistributedManagedSystemImpl(executor, graph);
-			
+
+			DistributedManagedSystemImpl system = new DistributedManagedSystemImpl(executor, graph, useFifoQueues);
+
 			if (randomizableProblemInstance != null)
 				randomizableProblemInstance.randomize(system);
 			boolean success = problem.execute(system, solutionClass);
-			
+
 			if (!success) {
 				System.out.println();
 				System.out.println("Bad state found");
@@ -48,11 +52,11 @@ public class ProblemTester {
 			}
 			sumTasks += system.getStartedTasks();
 			sumSteps += system.getSteps();
-			
+
 			for (Entry<InstructionType, Integer> e : system.getStats().entrySet())
 				Utils.add(stats, e.getKey(), e.getValue());
-			
-			accumulatedDots += numberOfDots/n;
+
+			accumulatedDots += numberOfDots / n;
 			while (accumulatedDots >= 1) {
 				System.out.print(".");
 				accumulatedDots -= 1;
@@ -68,5 +72,5 @@ public class ProblemTester {
 		System.out.println("log lines: " + (((double) sumSteps) / n) + "\ttasks: " + (((double) sumTasks) / n));
 		return true;
 	}
-	
+
 }
