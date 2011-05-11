@@ -25,7 +25,8 @@ public class MutexProblemInstance extends DefaultProblemInstance<Mutex> implemen
 			
 			@Override
 			public TesterVerdict test(DistributedManagedSystem system, Mutex solution) {
-				for (int i = 0; i < 20; i++) {
+				int count = (int)(20*Math.random());
+				for (int i = 0; i < count; i++) {
 					solution.lock();
 					if (lockHoldCount.incrementAndGet() != 1) {
 						system.addLogLine("Multiple processes inside the critical section detected");
