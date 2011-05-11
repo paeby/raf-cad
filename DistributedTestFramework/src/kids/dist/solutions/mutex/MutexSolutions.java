@@ -224,6 +224,6 @@ public class MutexSolutions {
 	}
 	
 	public static void main(String[] args) {
-		MutexTester.testMutex(MutexTokenRandom.class);
+		MutexTester.testMutex(MutexTokenRing.class);
 	}
 }
