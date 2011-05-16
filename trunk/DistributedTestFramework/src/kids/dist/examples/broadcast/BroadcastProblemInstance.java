@@ -9,11 +9,13 @@ import kids.dist.util.RandomMessage;
 import kids.dist.util.TimeoutCounter;
 
 public class BroadcastProblemInstance extends DefaultProblemInstance<Broadcast> implements RandomizableProblemInstance<Broadcast> {
-	Object msg;
+	volatile Object msg;
+	volatile int bcaster;
 	
 	@Override
 	public void randomize(DistributedManagedSystem system) {
 		msg = new RandomMessage();
+		bcaster = (int)(Math.random() * system.getNumberOfNodes());
 	}
 	
 	@Override
@@ -22,7 +24,7 @@ public class BroadcastProblemInstance extends DefaultProblemInstance<Broadcast> 
 			
 			@Override
 			public TesterVerdict test(DistributedManagedSystem system, Broadcast solution) {
-				if (threadIndex == 0) {
+				if (threadIndex == bcaster) {
 					solution.broadcast(msg);
 					Object result = solution.getBroadcastedMessage();
 					if (result == null || !result.equals(msg))
@@ -44,6 +46,5 @@ public class BroadcastProblemInstance extends DefaultProblemInstance<Broadcast> 
 				}
 			}
 		};
-		
 	}
 }
