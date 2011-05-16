@@ -11,7 +11,6 @@ import kids.dist.util.RandomMessage;
 
 public class MPIGatherProblemInstance extends DefaultProblemInstance<MPIGather> implements RandomizableProblemInstance<MPIGather> {
 	AtomicReferenceArray<Object> msgs = null;
-	volatile int bcaster;
 	
 	@Override
 	public void randomize(DistributedManagedSystem system) {
@@ -19,7 +18,6 @@ public class MPIGatherProblemInstance extends DefaultProblemInstance<MPIGather> 
 			msgs = new AtomicReferenceArray<Object>(system.getNumberOfNodes());
 		for (int i = 0; i < system.getNumberOfNodes(); i++)
 			msgs.set(i, new RandomMessage());
-		bcaster = (int) (Math.random() * system.getNumberOfNodes());
 	}
 	
 	@Override
@@ -28,8 +26,8 @@ public class MPIGatherProblemInstance extends DefaultProblemInstance<MPIGather> 
 			
 			@Override
 			public TesterVerdict test(DistributedManagedSystem system, MPIGather solution) {
-				if (threadIndex == bcaster) {
-					solution.offer(threadIndex, msgs.get(threadIndex));
+				solution.offer(threadIndex, msgs.get(threadIndex));
+				if (system.getProcessId() < system.getProcessNeighbourhood()[0]) {
 					Object[] result = solution.gather();
 					if (result == null || result.length != msgs.length())
 						return TesterVerdict.FAIL;
@@ -37,10 +35,8 @@ public class MPIGatherProblemInstance extends DefaultProblemInstance<MPIGather> 
 						if (result[i] != msgs.get(i))
 							return TesterVerdict.FAIL;
 					return TesterVerdict.SUCCESS;
-				} else {
-					solution.offer(threadIndex, msgs.get(threadIndex));
+				} else
 					return TesterVerdict.SUCCESS;
-				}
 			}
 		};
 	}
