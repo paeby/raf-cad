@@ -37,7 +37,7 @@ public class ProblemTester {
 				graph = density == 100 ? RandomNetworkGenerator.generateCliqueInfos(nodeCount) : RandomNetworkGenerator.generateNeighbourhoodInfos(nodeCount, density);
 			}
 
-			DistributedManagedSystemImpl system = new DistributedManagedSystemImpl(executor, graph, useFifoQueues);
+			DistributedManagedSystemImpl system = new DistributedManagedSystemImpl(executor, graph, null, useFifoQueues);
 
 			if (randomizableProblemInstance != null)
 				randomizableProblemInstance.randomize(system);

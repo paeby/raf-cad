@@ -26,43 +26,43 @@ import kids.dist.core.impl.message.RandomMessageQueue;
 
 public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	private final ExecutorService executor;
-
+	
 	final AtomicInteger startedTasks = new AtomicInteger();
 	final Map<Long, ProcessInfo> processInfosByThreadId = new HashMap<Long, ProcessInfo>();
 	final List<ProcessInfo> processInfos = new ArrayList<ProcessInfo>();
 	final AtomicInteger processInfoDispenser = new AtomicInteger(0);
-
+	
 	final Map<Long, Object> monitors = new LinkedHashMap<Long, Object>();
 	final AtomicInteger activeTasks = new AtomicInteger(1);
 	final AtomicReference<Object> current = new AtomicReference<Object>();
-
+	
 	final AtomicBoolean transactionActive = new AtomicBoolean();
-
+	
 	final AtomicBoolean finished = new AtomicBoolean();
 	final long seed;
 	final Random rand;
-
+	
 	final ArrayList<String> log = new ArrayList<String>();
 	final Map<InstructionType, Integer> stats = new TreeMap<InstructionType, Integer>();
-
-	public DistributedManagedSystemImpl(ExecutorService executor, int[][] neighbourhoods) {
-		this(executor, neighbourhoods, false);
+	
+	public DistributedManagedSystemImpl(ExecutorService executor, int[][] neighbourhoods, int[] pIds) {
+		this(executor, neighbourhoods, pIds, false);
 	}
-
-	public DistributedManagedSystemImpl(ExecutorService executor, int[][] neighbourhoods, boolean fifoMessageQueues) {
+	
+	public DistributedManagedSystemImpl(ExecutorService executor, int[][] neighbourhoods, int[] pIds, boolean fifoMessageQueues) {
 		this.executor = executor;
 		this.seed = new Random().nextLong();
 		this.rand = new Random(seed);
 		for (int i = 0; i < neighbourhoods.length; i++) {
-			ProcessInfo newInfo = new ProcessInfo(neighbourhoods[i], i, fifoMessageQueues);
+			ProcessInfo newInfo = new ProcessInfo(neighbourhoods[i], i, pIds != null ? pIds[i] : -1, fifoMessageQueues);
 			processInfos.add(newInfo);
 		}
 	}
-
+	
 	public ProcessInfo getProcessInfo() {
 		return getProcessInfo(Thread.currentThread().getId());
 	}
-
+	
 	public ProcessInfo getProcessInfo(long threadId) {
 		synchronized (this) {
 			ProcessInfo info = processInfosByThreadId.get(threadId);
@@ -73,17 +73,17 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			return info;
 		}
 	}
-
+	
 	@Override
 	public int getProcessId() {
 		return getProcessInfo().processId;
 	}
-
+	
 	@Override
 	public int[] getProcessNeighbourhood() {
 		return getProcessInfo().neighbourhoodUsingIds;
 	}
-
+	
 	@Override
 	public void sendMessage(int destinationId, int type, Object message) {
 		ProcessInfo myInfo = getProcessInfo();
@@ -103,12 +103,12 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			throw new IllegalArgumentException("Process by Id " + destinationId + " unknown");
 		}
 	}
-
+	
 	@Override
 	public void yield() {
 		handleMessages();
 	}
-
+	
 	@Override
 	public void handleMessages() {
 		ProcessInfo myInfo = getProcessInfo();
@@ -120,18 +120,18 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			actionCalled();
 		}
 	}
-
+	
 	@Override
 	public void startTaskConcurrently(Task task) {
 		activeTasks.incrementAndGet();
 		WrappedRunnable wrapped = new WrappedRunnable(task, this);
 		executor.execute(wrapped);
 	}
-
+	
 	@Override
 	public void taskStarted() {
 		startedTasks.incrementAndGet();
-
+		
 		synchronized (this) {
 			ProcessInfo info = getProcessInfo();
 			Thread cur = Thread.currentThread();
@@ -139,10 +139,10 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 				monitors.put(cur.getId(), info.monitor);
 			}
 		}
-
+		
 		waitForAction();
 	}
-
+	
 	@Override
 	public void taskFinished() {
 		synchronized (this) {
@@ -152,15 +152,15 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 				throw new IllegalStateException();
 		}
 		int active = activeTasks.decrementAndGet();
-
+		
 		if (active == 0)
 			awakeNext();
 	}
-
+	
 	@Override
 	public void actionCalled() {
 		Object monitor = getMonitor();
-
+		
 		ProcessInfo info = getProcessInfo();
 		if (info.timebombTicks > 0) {
 			info.timebombTicks--;
@@ -168,24 +168,24 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			addLogLine("Process #" + info.processId + " abruptly terminated!");
 			throw new FrameworkDecidedToKillProcessException();
 		}
-
+		
 		if (transactionActive.get()) {
 			if (current.get() != monitor)
 				throw new IllegalStateException();
 		} else {
 			if (!current.compareAndSet(monitor, null))
 				throw new IllegalStateException();
-
+			
 			waitForAction();
 		}
 	}
-
+	
 	private void waitForAction() {
 		Object monitor = getMonitor();
 		int active = activeTasks.decrementAndGet();
 		if (active == 0)
 			awakeNext();
-
+		
 		synchronized (monitor) {
 			while (current.get() != monitor) {
 				try {
@@ -195,17 +195,17 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 				}
 			}
 		}
-
+		
 		activeTasks.incrementAndGet();
 	}
-
+	
 	private static final int possibleLoopSize = 500000;
-
+	
 	@Override
 	public void addLogLine(String line) {
 		synchronized (this) {
 			log.add("pid=" + getProcessId() + ":\t" + line);
-
+			
 			if (log.size() == possibleLoopSize) {
 				System.out.println("POSSIBLE ENDLESS LOOP");
 				printFinalState();
@@ -213,18 +213,18 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			}
 		}
 	}
-
+	
 	private Object getMonitor() {
 		synchronized (this) {
 			ProcessInfo info = getProcessInfo();
 			return info.monitor;
 		}
 	}
-
+	
 	private void awakeNext() {
 		synchronized (this) {
 			int n = monitors.size();
-
+			
 			if (n == 0) {
 				if (!finished.compareAndSet(false, true))
 					throw new IllegalStateException();
@@ -243,25 +243,25 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 						}
 						return;
 					}
-
+					
 					index--;
 				}
 			}
-
+			
 		}
 	}
-
+	
 	public void startTasks(Task[] tasks) {
 		synchronized (this) {
 			for (Task task : tasks)
 				startTaskConcurrently(task);
 		}
-
+		
 		startSimAndWaitToFinish();
-
+		
 		// printFinalState();
 	}
-
+	
 	@Override
 	public void startSimAndWaitToFinish() {
 		int n = processInfos.size();
@@ -272,11 +272,11 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			}
 			Arrays.sort(processInfos.get(i).neighbourhoodUsingIds);
 		}
-
+		
 		int active = activeTasks.decrementAndGet();
 		if (active == 0)
 			awakeNext();
-
+		
 		synchronized (finished) {
 			while (!finished.get()) {
 				try {
@@ -287,7 +287,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			}
 		}
 	}
-
+	
 	public void printFinalState() {
 		synchronized (this) {
 			System.out.println();
@@ -301,31 +301,31 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			}
 		}
 	}
-
+	
 	public int getStartedTasks() {
 		return startedTasks.get();
 	}
-
+	
 	public int getSteps() {
 		synchronized (this) {
 			return log.size();
 		}
 	}
-
+	
 	@Override
 	public void incStat(InstructionType type) {
 		Utils.increment(stats, type);
 	}
-
+	
 	public Map<InstructionType, Integer> getStats() {
 		return stats;
 	}
-
+	
 	@Override
 	public int getNumberOfNodes() {
 		return processInfos.size();
 	}
-
+	
 	@SuppressWarnings("unused")
 	public class ProcessInfo implements Comparable<ProcessInfo> {
 		private final int processId;
@@ -336,21 +336,19 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 		private final Object monitor;
 		private final AtomicReference<Solution> solution;
 		private int timebombTicks = -1;
-
+		
 		public ProcessInfo(int[] neighbourhood, int processIndex, boolean fifoMessageQueues) {
-			if (processIndex >= 9000)
-				throw new IllegalArgumentException("Too many processes!");
-			int pId = 0;
-			boolean unique = false;
-			while (!unique) {
-				unique = true;
-				pId = rand.nextInt(9000) + 1000;
-				for (ProcessInfo pInfo : processInfos)
-					if (pInfo.processId == pId) {
-						unique = false;
-						continue;
-					}
+			this(neighbourhood, processIndex, -1, fifoMessageQueues);
+		}
+		
+		public ProcessInfo(int[] neighbourhood, int processIndex, int pId, boolean fifoMessageQueues) {
+			if (pId < 0) {
+				if (processIndex >= 9000)
+					throw new IllegalArgumentException("Too many processes!");
+				
+				pId = createUniqueProcessId();
 			}
+			
 			this.processIndex = processIndex;
 			this.processId = pId;
 			this.messageQueue = fifoMessageQueues ? new FifoMessageQueue() : new RandomMessageQueue();
@@ -359,7 +357,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			this.monitor = new Object();
 			this.solution = new AtomicReference<Solution>(null);
 		}
-
+		
 		@Override
 		public int compareTo(ProcessInfo o) {
 			if (this.processId > o.processId)
@@ -369,14 +367,29 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			else
 				return 0;
 		}
+		
+		int createUniqueProcessId() {
+			boolean unique = false;
+			int pId = -1;
+			while (!unique) {
+				unique = true;
+				pId = rand.nextInt(9000) + 1000;
+				for (ProcessInfo pInfo : processInfos)
+					if (pInfo.processId == pId) {
+						unique = false;
+						continue;
+					}
+			}
+			return pId;
+		}
 	}
-
+	
 	@Override
 	public void setMySolution(Solution solution) {
 		if (!getProcessInfo().solution.compareAndSet(null, solution))
 			throw new IllegalStateException("Solution already set!");
 	}
-
+	
 	@Override
 	public void setTimebombForThisThread(int ticks) {
 		if (ticks == 0) {
