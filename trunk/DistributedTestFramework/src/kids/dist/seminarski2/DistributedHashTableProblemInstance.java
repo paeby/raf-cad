@@ -1,6 +1,7 @@
 package kids.dist.seminarski2;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -75,7 +76,7 @@ public class DistributedHashTableProblemInstance extends DefaultProblemInstance<
 					Object result = solution.get(element.id);
 					if (result == null) {
 						if (!element.possibleObjects.isEmpty()) {
-							system.addLogLine("Object returned by get is null, where a non-null object should be inside: id = " + element.id);
+							system.addLogLine("ERROR: Object returned by get is null, where a non-null object should be inside: id = " + element.id);
 							return TesterVerdict.FAIL;
 						}
 					} else {
@@ -86,19 +87,26 @@ public class DistributedHashTableProblemInstance extends DefaultProblemInstance<
 								break;
 							}
 						if (!found) {
-							system.addLogLine("Object returned by get should not be here: id = " + element.id);
+							system.addLogLine("ERROR: Object returned by get should not be here: id = " + element.id);
 							return TesterVerdict.FAIL;
 						}
 					}
 					return TesterVerdict.SUCCESS;
 				} finally {
 					if (element != null) {
-						element.workingIndices.remove(threadIndex);
-						if (element.workingIndices.isEmpty()) {
+						if (!element.workingIndices.remove(threadIndex) || !element.workingIndices.isEmpty())
+							throw new IllegalStateException();
+
+						if (allowOverwrites || element.waitingIndices.size() <= 1) {
 							element.workingIndices.addAll(element.waitingIndices);
 							element.waitingIndices.clear();
-							element.firstWorkingIsInside = false;
+						} else {
+							Iterator<Integer> iterator = element.waitingIndices.iterator();
+							int next = iterator.next();
+							element.workingIndices.add(next);
+							iterator.remove();
 						}
+						element.firstWorkingIsInside = false;
 					}
 				}
 			}
@@ -115,23 +123,22 @@ public class DistributedHashTableProblemInstance extends DefaultProblemInstance<
 					while (!element.workingIndices.contains(threadIndex))
 						system.yield();
 					
-					if (!element.firstWorkingIsInside && allowOverwrites) {
+					if (allowOverwrites && !element.firstWorkingIsInside) {
 						element.firstWorkingIsInside = true;
 						element.possibleObjects.clear();
 					}
 					
-					if (element.possibleObjects.isEmpty() || allowOverwrites) {
+					if (allowOverwrites || element.possibleObjects.isEmpty()) {
 						Object newObject = new RandomMessage();
 						element.possibleObjects.add(newObject);
 						solution.put(element.id, newObject);
-						system.yield();
 					}
 					
 					system.yield();
 					
 					Object result = solution.get(element.id);
 					if (result == null) {
-						system.addLogLine("Added object under id " + element.id + " hasn't been found");
+						system.addLogLine("ERROR: Added object under id " + element.id + " hasn't been found");
 						return TesterVerdict.FAIL;
 					}
 					{
@@ -142,7 +149,7 @@ public class DistributedHashTableProblemInstance extends DefaultProblemInstance<
 								break;
 							}
 						if (!found) {
-							system.addLogLine("Object returned by get should not be here: id = " + element.id);
+							system.addLogLine("ERROR: Object returned by get should not be here: id = " + element.id);
 							return TesterVerdict.FAIL;
 						}
 					}
@@ -151,8 +158,15 @@ public class DistributedHashTableProblemInstance extends DefaultProblemInstance<
 					if (element != null) {
 						element.workingIndices.remove(threadIndex);
 						if (element.workingIndices.isEmpty()) {
-							element.workingIndices.addAll(element.waitingIndices);
-							element.waitingIndices.clear();
+							if (allowOverwrites || element.waitingIndices.size() <= 1) {
+								element.workingIndices.addAll(element.waitingIndices);
+								element.waitingIndices.clear();
+							} else {
+								Iterator<Integer> iterator = element.waitingIndices.iterator();
+								int next = iterator.next();
+								element.workingIndices.add(next);
+								iterator.remove();
+							}
 							element.firstWorkingIsInside = false;
 						}
 					}
