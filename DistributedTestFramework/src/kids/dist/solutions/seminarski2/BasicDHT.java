@@ -93,6 +93,6 @@ public class BasicDHT implements DistributedHashTable, InitiableSolution {
 	}
 	
 	public static void main(String[] args) {
-		DistributedHashTableTester.testDHT(BasicDHT.class, true, false, true);
+		DistributedHashTableTester.testDHT(BasicDHT.class, true, false, false);
 	}
 }

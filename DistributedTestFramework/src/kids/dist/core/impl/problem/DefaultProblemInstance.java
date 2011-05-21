@@ -51,16 +51,17 @@ public abstract class DefaultProblemInstance<T extends Solution> implements Prob
 						ex = rex;
 						return;
 					} finally {
+						countAlive.decrementAndGet();
+						
 						if (ex != null) {
 							if (ex instanceof FrameworkDecidedToKillProcessException)
 								return;
 							else
 								throw ex;
+						} else {
+							while (countAlive.get() > 0)
+								system.handleMessages();
 						}
-						
-						countAlive.decrementAndGet();
-						while (countAlive.get() > 0)
-							system.handleMessages();
 					}
 				}
 			});
