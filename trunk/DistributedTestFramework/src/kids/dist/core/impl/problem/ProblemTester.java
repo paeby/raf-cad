@@ -13,36 +13,39 @@ import kids.dist.common.problem.Solution;
 import kids.dist.core.impl.DistributedManagedSystemImpl;
 import kids.dist.core.impl.InstructionType;
 import kids.dist.core.impl.NamedThreadFactory;
-import kids.dist.core.network.RandomNetworkGenerator;
+import kids.dist.core.network.DistNetwork;
+import kids.dist.core.network.DistNetworkFactory;
 
 public class ProblemTester {
-
-	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, Class<? extends S> solutionClass, int nodeCount, int density, int n) {
-		return testProblem(problem, solutionClass, false, nodeCount, density, n);
+	
+	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, Class<? extends S> solutionClass, DistNetworkFactory factory, int n) {
+		return testProblem(problem, solutionClass, factory, n, false, false);
 	}
-
-	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, Class<? extends S> solutionClass, boolean useFifoQueues, int nodeCount, int density, int n) {
+	
+	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, Class<? extends S> solutionClass, DistNetworkFactory factory, int n, boolean useFifoQueues, boolean allowMessagesToAnyone) {
 		ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("workers"));
-		int[][] graph = null;
 		RandomizableProblemInstance<S> randomizableProblemInstance = ((problem instanceof RandomizableProblemInstance) ? (RandomizableProblemInstance<S>) problem : null);
-
+		DistNetwork network = null;
+		
 		Map<InstructionType, Integer> stats = new TreeMap<InstructionType, Integer>();
 		long sumTasks = 0;
 		long sumSteps = 0;
-
+		
 		double numberOfDots = 20;
 		double accumulatedDots = 0;
 		for (int i = 0; i < n; i++) {
-			if (graph == null || Math.random() < 0.1d) {
-				graph = density == 100 ? RandomNetworkGenerator.generateCliqueInfos(nodeCount) : RandomNetworkGenerator.generateNeighbourhoodInfos(nodeCount, density);
+			
+			if (network == null || Math.random() < 0.1d) {
+				network = factory.createRandomDistNetwork();
 			}
-
-			DistributedManagedSystemImpl system = new DistributedManagedSystemImpl(executor, graph, null, useFifoQueues);
-
+			
+			DistributedManagedSystemImpl system = new DistributedManagedSystemImpl(executor, network, useFifoQueues);
+			system.setAllowMessageToAnyone(allowMessagesToAnyone);
+			
 			if (randomizableProblemInstance != null)
 				randomizableProblemInstance.randomize(system);
 			boolean success = problem.execute(system, solutionClass);
-
+			
 			if (!success) {
 				System.out.println();
 				System.out.println("Bad state found");
@@ -52,10 +55,10 @@ public class ProblemTester {
 			}
 			sumTasks += system.getStartedTasks();
 			sumSteps += system.getSteps();
-
+			
 			for (Entry<InstructionType, Integer> e : system.getStats().entrySet())
 				Utils.add(stats, e.getKey(), e.getValue());
-
+			
 			accumulatedDots += numberOfDots / n;
 			while (accumulatedDots >= 1) {
 				System.out.print(".");
@@ -72,5 +75,5 @@ public class ProblemTester {
 		System.out.println("log lines: " + (((double) sumSteps) / n) + "\ttasks: " + (((double) sumTasks) / n));
 		return true;
 	}
-
+	
 }

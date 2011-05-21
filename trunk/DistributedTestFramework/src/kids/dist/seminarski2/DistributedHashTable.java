@@ -20,11 +20,4 @@ public interface DistributedHashTable extends Solution {
 	 * @return objekat pod hashom, ili null ukoliko objekat nije pronađen 
 	 */
 	public Object get(int hash);
-	
-	/**
-	 * Uklanja objekat pod datim hash-om iz DHT-a. Ukoliko objekat
-	 * ne postoji u DHT-u metoda ne mora da radi išta.
-	 * @param hash unikatni ID objekta
-	 */
-	public void remove(int hash);
 }
