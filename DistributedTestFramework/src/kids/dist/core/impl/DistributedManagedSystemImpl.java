@@ -23,6 +23,7 @@ import kids.dist.core.MessageQueue;
 import kids.dist.core.impl.message.FifoMessageQueue;
 import kids.dist.core.impl.message.MessageBundleImpl;
 import kids.dist.core.impl.message.RandomMessageQueue;
+import kids.dist.core.network.DistNetwork;
 
 public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	private final ExecutorService executor;
@@ -45,18 +46,30 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	final ArrayList<String> log = new ArrayList<String>();
 	final Map<InstructionType, Integer> stats = new TreeMap<InstructionType, Integer>();
 	
-	public DistributedManagedSystemImpl(ExecutorService executor, int[][] neighbourhoods, int[] pIds) {
-		this(executor, neighbourhoods, pIds, false);
+	boolean allowMessageToAnyone;
+	
+	public DistributedManagedSystemImpl(ExecutorService executor, DistNetwork network) {
+		this(executor, network, false);
 	}
 	
-	public DistributedManagedSystemImpl(ExecutorService executor, int[][] neighbourhoods, int[] pIds, boolean fifoMessageQueues) {
+	public DistributedManagedSystemImpl(ExecutorService executor, DistNetwork network, boolean fifoMessageQueues) {
 		this.executor = executor;
 		this.seed = new Random().nextLong();
 		this.rand = new Random(seed);
-		for (int i = 0; i < neighbourhoods.length; i++) {
-			ProcessInfo newInfo = new ProcessInfo(neighbourhoods[i], i, pIds != null ? pIds[i] : -1, fifoMessageQueues);
+		int[] ids = network.getPIds();
+		int[][] neighborhoods = network.getNeighborhoods();
+		for (int i = 0; i < ids.length; i++) {
+			ProcessInfo newInfo = new ProcessInfo(neighborhoods[i], i, ids[i], fifoMessageQueues);
 			processInfos.add(newInfo);
 		}
+	}
+	
+	public boolean isAllowMessageToAnyone() {
+		return allowMessageToAnyone;
+	}
+	
+	public void setAllowMessageToAnyone(boolean allowMessageToAnyone) {
+		this.allowMessageToAnyone = allowMessageToAnyone;
 	}
 	
 	public ProcessInfo getProcessInfo() {
@@ -81,7 +94,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	
 	@Override
 	public int[] getProcessNeighbourhood() {
-		return getProcessInfo().neighbourhoodUsingIds;
+		return getProcessInfo().neighbourhood;
 	}
 	
 	@Override
@@ -89,7 +102,9 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 		ProcessInfo myInfo = getProcessInfo();
 		// Object msgClone = ObjectHelper.clone(message);
 		MessageBundle msg = new MessageBundleImpl(myInfo.processId, destinationId, type, message);
-		if (Arrays.binarySearch(myInfo.neighbourhoodUsingIds, destinationId) < 0)
+		if (myInfo.processId == destinationId)
+			throw new IllegalArgumentException("Process " + myInfo.processId + " pokušava da šalje poruke sam sebi");
+		if (!allowMessageToAnyone && Arrays.binarySearch(myInfo.neighbourhood, destinationId) < 0)
 			throw new IllegalArgumentException("Process " + myInfo.processId + " ne može da šalje poruke procesu " + destinationId + " koji mu je van susedstva");
 		else {
 			actionCalled();
@@ -264,15 +279,6 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	
 	@Override
 	public void startSimAndWaitToFinish() {
-		int n = processInfos.size();
-		for (int i = 0; i < n; i++) {
-			int[] myNeighbourhood = processInfos.get(i).neighbourhood;
-			for (int neighIndex = 0; neighIndex < myNeighbourhood.length; neighIndex++) {
-				processInfos.get(i).neighbourhoodUsingIds[neighIndex] = processInfos.get(myNeighbourhood[neighIndex]).processId;
-			}
-			Arrays.sort(processInfos.get(i).neighbourhoodUsingIds);
-		}
-		
 		int active = activeTasks.decrementAndGet();
 		if (active == 0)
 			awakeNext();
@@ -291,6 +297,14 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	public void printFinalState() {
 		synchronized (this) {
 			System.out.println();
+			
+			System.out.println("Graph info:");
+			for (ProcessInfo info: processInfos)
+				System.out.println("Neighborhood of node #" + info.processId + ": " + Arrays.toString(info.neighbourhood));
+			
+			System.out.println();
+			System.out.println("Message log:");
+			
 			if (log.size() != possibleLoopSize) {
 				for (String l : log)
 					System.out.println("\t" + l);
@@ -326,34 +340,30 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 		return processInfos.size();
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		for (ProcessInfo info : processInfos) {
+			builder.append(info.processId + " " + Arrays.toString(info.neighbourhood) + "\n");
+		}
+		return builder.toString();
+	}
+	
 	@SuppressWarnings("unused")
 	public class ProcessInfo implements Comparable<ProcessInfo> {
 		private final int processId;
 		private final int processIndex;
 		private final int[] neighbourhood;
-		private final int[] neighbourhoodUsingIds;
 		private final MessageQueue messageQueue;
 		private final Object monitor;
 		private final AtomicReference<Solution> solution;
 		private int timebombTicks = -1;
 		
-		public ProcessInfo(int[] neighbourhood, int processIndex, boolean fifoMessageQueues) {
-			this(neighbourhood, processIndex, -1, fifoMessageQueues);
-		}
-		
 		public ProcessInfo(int[] neighbourhood, int processIndex, int pId, boolean fifoMessageQueues) {
-			if (pId < 0) {
-				if (processIndex >= 9000)
-					throw new IllegalArgumentException("Too many processes!");
-				
-				pId = createUniqueProcessId();
-			}
-			
 			this.processIndex = processIndex;
 			this.processId = pId;
 			this.messageQueue = fifoMessageQueues ? new FifoMessageQueue() : new RandomMessageQueue();
 			this.neighbourhood = neighbourhood;
-			this.neighbourhoodUsingIds = new int[neighbourhood.length];
 			this.monitor = new Object();
 			this.solution = new AtomicReference<Solution>(null);
 		}
@@ -366,21 +376,6 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 				return 1;
 			else
 				return 0;
-		}
-		
-		int createUniqueProcessId() {
-			boolean unique = false;
-			int pId = -1;
-			while (!unique) {
-				unique = true;
-				pId = rand.nextInt(9000) + 1000;
-				for (ProcessInfo pInfo : processInfos)
-					if (pInfo.processId == pId) {
-						unique = false;
-						continue;
-					}
-			}
-			return pId;
 		}
 	}
 	

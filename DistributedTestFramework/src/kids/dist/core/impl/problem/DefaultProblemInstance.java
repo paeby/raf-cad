@@ -47,14 +47,16 @@ public abstract class DefaultProblemInstance<T extends Solution> implements Prob
 								break;
 							}
 						}
-					} catch (FrameworkDecidedToKillProcessException exc) {
-						return;
-					} catch (RuntimeException thr) {
-						ex = thr;
+					} catch (RuntimeException rex) {
+						ex = rex;
 						return;
 					} finally {
-						if (ex != null)
-							throw ex;
+						if (ex != null) {
+							if (ex instanceof FrameworkDecidedToKillProcessException)
+								return;
+							else
+								throw ex;
+						}
 						
 						countAlive.decrementAndGet();
 						while (countAlive.get() > 0)

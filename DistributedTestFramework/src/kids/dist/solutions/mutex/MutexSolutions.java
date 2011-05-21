@@ -388,6 +388,11 @@ public class MutexSolutions {
 	}
 	
 	public static void main(String[] args) {
+		MutexTester.testMutex(MutexCheating.class);
+		MutexTester.testMutex(MutexCentralized.class);
+		MutexTester.testMutex(MutexTokenRandom.class);
+		MutexTester.testMutex(MutexTokenRing.class);
+		MutexTester.testMutex(RicartAgrawalaMutex.class);
 		MutexTester.testMutex(RaymondMutex.class);
 	}
 }

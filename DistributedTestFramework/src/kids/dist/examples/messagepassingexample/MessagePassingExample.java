@@ -7,6 +7,7 @@ import kids.dist.core.impl.problem.DefaultProblemInstance;
 import kids.dist.core.impl.problem.ProblemTester;
 import kids.dist.core.impl.problem.SingleProcessTester;
 import kids.dist.core.impl.problem.TesterVerdict;
+import kids.dist.core.network.CliqueDistNetwork;
 
 public class MessagePassingExample implements Solution {
 	DistributedSystem system;
@@ -36,6 +37,6 @@ public class MessagePassingExample implements Solution {
 					}
 				};
 			}
-		}, MessagePassingExample.class, 2, 100, 1);
+		}, MessagePassingExample.class, new CliqueDistNetwork.Factory(2), 1);
 	}
 }

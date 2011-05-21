@@ -2,9 +2,19 @@ package kids.dist.core.network;
 
 import java.util.Random;
 
-public class RandomNetworkGenerator {
-	public static int[][] generateNeighbourhoodInfos(int nodeCount, int density) {
+import kids.dist.util.RandomIntGenerator;
+
+public class SparseDistNetwork implements DistNetwork {
+	int[] ids;
+	int[][] neighbourhoods;
+	
+	public SparseDistNetwork(int nodeCount, int density) {
 		Random random = new Random();
+		
+		this.ids = RandomIntGenerator.generateDifferentInts(9000, nodeCount);
+		for (int i = 0; i < ids.length; i++)
+			ids[i] += 1000;
+		
 		boolean[][] areNeighbours = new boolean[nodeCount][];
 		for (int i = 0; i < nodeCount; i++) {
 			areNeighbours[i] = new boolean[nodeCount];
@@ -23,7 +33,7 @@ public class RandomNetworkGenerator {
 				areNeighbours[forcedNeighbour][thisNode] = true;
 			}
 		}
-		int[][] neighbourhoods = new int[nodeCount][];
+		neighbourhoods = new int[nodeCount][];
 		for (int thisNode = 0; thisNode < nodeCount; thisNode++) {
 			int count = 0;
 			for (int otherNode = 0; otherNode < nodeCount; otherNode++)
@@ -33,20 +43,32 @@ public class RandomNetworkGenerator {
 			count = 0;
 			for (int otherNode = 0; otherNode < nodeCount; otherNode++)
 				if (areNeighbours[thisNode][otherNode])
-					neighbourhoods[thisNode][count++] = otherNode;
+					neighbourhoods[thisNode][count++] = ids[otherNode];
 		}
+	}
+	
+	@Override
+	public int[] getPIds() {
+		return ids;
+	}
+	
+	@Override
+	public int[][] getNeighborhoods() {
 		return neighbourhoods;
 	}
 	
-	public static int[][] generateCliqueInfos(int nodeCount) {
-		int[][] results = new int[nodeCount][];
-		for (int thisNode = 0; thisNode < nodeCount; thisNode++) {
-			results[thisNode] = new int[nodeCount - 1];
-			for (int i = 0; i < thisNode;)
-				results[thisNode][i] = i++;
-			for (int i = thisNode; i < nodeCount - 1;)
-				results[thisNode][i++] = i;
+	public static final class Factory implements DistNetworkFactory {
+		final int size;
+		final int density;
+		
+		public Factory(int size, int density) {
+			this.size = size;
+			this.density = density;
 		}
-		return results;
+		
+		@Override
+		public SparseDistNetwork createRandomDistNetwork() {
+			return new SparseDistNetwork(size, density);
+		}
 	}
 }
