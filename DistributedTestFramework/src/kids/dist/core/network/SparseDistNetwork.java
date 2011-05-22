@@ -1,5 +1,6 @@
 package kids.dist.core.network;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import kids.dist.util.RandomIntGenerator;
@@ -14,6 +15,7 @@ public class SparseDistNetwork implements DistNetwork {
 		this.ids = RandomIntGenerator.generateDifferentInts(9000, nodeCount);
 		for (int i = 0; i < ids.length; i++)
 			ids[i] += 1000;
+		Arrays.sort(this.ids);
 		
 		boolean[][] areNeighbours = new boolean[nodeCount][];
 		for (int i = 0; i < nodeCount; i++) {
