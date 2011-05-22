@@ -11,4 +11,10 @@ public class TwoManConsensusTester {
 			return;
 		System.out.println("All good!");
 	}
+	
+	public static void testTwoManConsensusWithCrashes(Class<? extends TwoManConsensus> solutionClass) {
+		if (!ProblemTester.testProblem(new ConsensusProblemInstance(1), solutionClass, new CliqueDistNetwork.Factory(2), 400))
+			return;
+		System.out.println("All good!");
+	}
 }
