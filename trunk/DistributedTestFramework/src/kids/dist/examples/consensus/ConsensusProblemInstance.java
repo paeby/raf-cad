@@ -17,12 +17,12 @@ public class ConsensusProblemInstance extends DefaultProblemInstance<Consensus> 
 	
 	final AtomicInteger stigaoDo = new AtomicInteger(0);
 	final AtomicInteger accepted = new AtomicInteger(-1);
-	final AtomicInteger deadNodeCount = new AtomicInteger();
+	final AtomicInteger deadNodeCountdown = new AtomicInteger();
 	
 	@Override
 	public void randomize(DistributedManagedSystem system) {
 		accepted.set(-1);
-		deadNodeCount.set(numberOfDeadOnes);
+		deadNodeCountdown.set(system.getNumberOfNodes() - numberOfDeadOnes);
 	}
 	
 	@Override
@@ -31,13 +31,9 @@ public class ConsensusProblemInstance extends DefaultProblemInstance<Consensus> 
 			
 			@Override
 			public TesterVerdict test(DistributedManagedSystem system, Consensus solution) {
-				{
-					int deadNodeCountNow;
-					while ((deadNodeCountNow = deadNodeCount.get()) > 0) {
-						if (deadNodeCount.compareAndSet(deadNodeCountNow, deadNodeCountNow - 1))
-							system.setTimebombForThisThread(6);
-					}
-				}
+				if (deadNodeCountdown.decrementAndGet() < 0)
+					system.setTimebombForThisThread(6);
+				
 				system.handleMessages();
 				int myProposal = stigaoDo.incrementAndGet();
 				system.addLogLine("Process #" + system.getProcessId() + " has been proposed a value " + myProposal);
