@@ -1,5 +1,7 @@
 package kids.dist.core.network;
 
+import java.util.Arrays;
+
 import kids.dist.util.RandomIntGenerator;
 
 public class CliqueDistNetwork implements DistNetwork {
@@ -10,6 +12,7 @@ public class CliqueDistNetwork implements DistNetwork {
 		this.ids = RandomIntGenerator.generateDifferentInts(9000, size);
 		for (int i = 0; i < ids.length; i++)
 			ids[i] += 1000;
+		Arrays.sort(this.ids);
 		
 		neighbourhoods = new int[size][];
 		for (int thisNode = 0; thisNode < size; thisNode++) {
