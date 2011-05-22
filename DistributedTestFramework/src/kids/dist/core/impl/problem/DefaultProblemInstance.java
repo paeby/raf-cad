@@ -59,8 +59,12 @@ public abstract class DefaultProblemInstance<T extends Solution> implements Prob
 							else
 								throw ex;
 						} else {
-							while (countAlive.get() > 0)
-								system.handleMessages();
+							try {
+								while (countAlive.get() > 0)
+									system.handleMessages();
+							} catch (FrameworkDecidedToKillProcessException exc) {
+								return;
+							}
 						}
 					}
 				}

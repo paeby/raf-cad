@@ -15,9 +15,9 @@ public class ConsensusProblemInstance extends DefaultProblemInstance<Consensus> 
 		this.numberOfDeadOnes = numberOfDeadones;
 	}
 	
-	AtomicInteger stigaoDo = new AtomicInteger(0);
-	AtomicInteger accepted = new AtomicInteger(-1);
-	AtomicInteger deadNodeCount = new AtomicInteger();
+	final AtomicInteger stigaoDo = new AtomicInteger(0);
+	final AtomicInteger accepted = new AtomicInteger(-1);
+	final AtomicInteger deadNodeCount = new AtomicInteger();
 	
 	@Override
 	public void randomize(DistributedManagedSystem system) {
@@ -31,12 +31,12 @@ public class ConsensusProblemInstance extends DefaultProblemInstance<Consensus> 
 			
 			@Override
 			public TesterVerdict test(DistributedManagedSystem system, Consensus solution) {
-				if (deadNodeCount.get() > 0) {
-					deadNodeCount.decrementAndGet();
-					int ticks = 0;
-					while (Math.random() < 0.97)
-						ticks++;
-					system.setTimebombForThisThread(ticks);
+				{
+					int deadNodeCountNow;
+					while ((deadNodeCountNow = deadNodeCount.get()) > 0) {
+						if (deadNodeCount.compareAndSet(deadNodeCountNow, deadNodeCountNow - 1))
+							system.setTimebombForThisThread(6);
+					}
 				}
 				system.handleMessages();
 				int myProposal = stigaoDo.incrementAndGet();
@@ -60,6 +60,5 @@ public class ConsensusProblemInstance extends DefaultProblemInstance<Consensus> 
 				}
 			}
 		};
-		
 	}
 }

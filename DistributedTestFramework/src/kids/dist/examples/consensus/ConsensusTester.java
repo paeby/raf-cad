@@ -18,4 +18,11 @@ public class ConsensusTester {
 			return;
 		System.out.println("All good!");
 	}
+	
+	public static void testConsensusWithCrashes(Class<? extends Consensus> solutionClass) {
+		System.out.println("Testing consensus with crashes..");
+		if (!ProblemTester.testProblem(new ConsensusProblemInstance(2), solutionClass, new CliqueDistNetwork.Factory(20), 200))
+			return;
+		System.out.println("All good!");
+	}
 }
