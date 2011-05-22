@@ -26,6 +26,26 @@ public class ConsensusSolutions {
 		}
 	}
 	
+	public static class CheatingConsensus implements Consensus, InitiableSolution {
+		DistributedSystem system;
+		static int value, n = 0;
+		
+		@Override
+		public void initialize() {
+			if ((n++ % (system.getProcessNeighbourhood().length + 1)) == 0)
+				CheatingConsensus.value = Integer.MIN_VALUE;
+		}
+		
+		@Override
+		public int propose(int value) {
+			if (CheatingConsensus.value == Integer.MIN_VALUE)
+				CheatingConsensus.value = value;
+			return CheatingConsensus.value;
+		}
+		
+		public void messageReceived(int from, int type, Object message) {}
+	}
+	
 	public static class MustBeWorkingConsensus implements Consensus, InitiableSolution {
 		DistributedSystem system;
 		int value = Integer.MAX_VALUE;
@@ -47,6 +67,7 @@ public class ConsensusSolutions {
 			
 			while (receivedMsgs > 0)
 				system.yield();
+			
 			return this.value;
 		}
 		
