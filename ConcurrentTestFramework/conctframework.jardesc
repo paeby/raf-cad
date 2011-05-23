@@ -25,6 +25,7 @@
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;core.impl"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;seminarski1"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.addition"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.stack"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.consensus"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.unsafequeue"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.queue"/>
@@ -35,10 +36,10 @@
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common.tasks"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.readerswriter"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.gatherer"/>
-        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.balance"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.condition"/>
-        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.blockingqueue"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.balance"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common.problem"/>
+        <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.blockingqueue"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;examples.snapshot"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;core.impl.problem"/>
         <javaElement handleIdentifier="=ConcurrentTestFramework/src&lt;common"/>

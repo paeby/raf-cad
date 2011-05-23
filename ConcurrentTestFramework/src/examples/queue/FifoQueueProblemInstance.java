@@ -34,7 +34,6 @@ public class FifoQueueProblemInstance implements ProblemInstance<FifoQueue> {
 		final AtomicInteger removesStarted = new AtomicInteger(1);
 		final AtomicInteger removesDone = new AtomicInteger(1);
 		
-		
 		final AtomicInteger addingDone = new AtomicInteger(howManyProcesses);
 		
 		for (int threadIndex = 0; threadIndex < howManyProcesses; threadIndex++) {

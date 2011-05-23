@@ -17,45 +17,43 @@ public class CASRegsiterImpl implements CASRegister {
 		this.registerId = registerId;
 		this.value = value;
 	}
-
+	
 	@Override
-	public int read() {		
+	public int read() {
 		system.actionCalled();
 		system.incStat(InstructionType.READ);
-		system.addLogLine("reg["+registerId+"].read() = " + value);
+		system.addLogLine("reg" + Arrays.toString(registerId) + ".read() = " + value);
 		return value;
 	}
-
+	
 	@Override
 	public void write(int value) {
 		system.actionCalled();
 		system.incStat(InstructionType.WRITE);
-		system.addLogLine("reg["+registerId+"].write(" + value + ")"); 
+		system.addLogLine("reg" + Arrays.toString(registerId) + ".write(" + value + ")");
 		this.value = value;
 	}
-
+	
 	@Override
 	public boolean compareAndSet(int expect, int update) {
 		system.actionCalled();
-		String details = "reg["+registerId+"]("+value+").cas(" + expect + ", " + update + ") = ";
+		String details = "reg" + Arrays.toString(registerId) + "(" + value + ").cas(" + expect + ", " + update + ") = ";
 		system.incStat(InstructionType.CAS);
 		if (value == expect) {
-			system.addLogLine(details+"true"); 
+			system.addLogLine(details + "true");
 			value = update;
 			return true;
-		}
-		else {
-			system.addLogLine(details+"false"); 
+		} else {
+			system.addLogLine(details + "false");
 			return false;
 		}
 	}
-
 	
 	@Override
-	public String toString() {	
+	public String toString() {
 		return "reg" + Arrays.toString(registerId) + "=" + Integer.toString(value);
 	}
-
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -64,7 +62,7 @@ public class CASRegsiterImpl implements CASRegister {
 		result = prime * result + value;
 		return result;
 	}
-
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -80,6 +78,5 @@ public class CASRegsiterImpl implements CASRegister {
 			return false;
 		return true;
 	}
-	
 	
 }
