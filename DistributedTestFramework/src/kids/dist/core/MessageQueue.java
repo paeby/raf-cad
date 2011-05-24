@@ -6,4 +6,6 @@ public interface MessageQueue {
 	public boolean isEmpty();
 	
 	public MessageBundle getMessage();
+	
+	public int size();
 }

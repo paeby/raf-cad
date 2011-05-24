@@ -29,4 +29,8 @@ public class RandomMessageQueue implements MessageQueue {
 			return messages.removeFirst();
 	}
 	
+	@Override
+	public int size() {
+		return messages.size();
+	}
 }

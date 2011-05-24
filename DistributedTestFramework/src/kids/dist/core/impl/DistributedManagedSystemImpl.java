@@ -198,8 +198,9 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 	private void waitForAction() {
 		Object monitor = getMonitor();
 		int active = activeTasks.decrementAndGet();
-		if (active == 0)
+		if (active == 0) {
 			awakeNext();
+		}
 		
 		synchronized (monitor) {
 			while (current.get() != monitor) {
@@ -246,6 +247,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 				synchronized (finished) {
 					finished.notify();
 				}
+				System.out.println("Finished!");
 			} else {
 				int index = rand.nextInt(n);
 				for (Iterator<Object> iter = monitors.values().iterator(); iter.hasNext();) {
@@ -261,8 +263,8 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 					
 					index--;
 				}
+				throw new IllegalStateException();
 			}
-			
 		}
 	}
 	
@@ -299,7 +301,7 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 			System.out.println();
 			
 			System.out.println("Graph info:");
-			for (ProcessInfo info: processInfos)
+			for (ProcessInfo info : processInfos)
 				System.out.println("Neighborhood of node #" + info.processId + ": " + Arrays.toString(info.neighbourhood));
 			
 			System.out.println();
