@@ -24,7 +24,7 @@ public class CrashDetectProblemInstance extends DefaultProblemInstance<CrashDete
 			public TesterVerdict test(DistributedManagedSystem system, CrashDetect solution) {
 				if (threadIndex == crashedIndex) {
 					crashedId = system.getProcessId();
-					system.setTimebombForThisThread(10);
+					system.setTimebombForThisThread(100);
 				}
 				
 				while (crashedId == -1)
