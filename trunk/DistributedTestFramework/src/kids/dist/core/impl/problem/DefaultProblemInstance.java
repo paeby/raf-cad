@@ -32,7 +32,7 @@ public abstract class DefaultProblemInstance<T extends Solution> implements Prob
 						if (mySolution instanceof InitiableSolution)
 							((InitiableSolution) mySolution).initialize();
 						SingleProcessTester<T> myTester = createSingleProcessTester(system, mySolution, threadIndex);
-						system.handleMessages();
+//						system.handleMessages();
 						if (myTester != null) {
 							TesterVerdict verdict = myTester.test(system, mySolution);
 							switch (verdict) {
