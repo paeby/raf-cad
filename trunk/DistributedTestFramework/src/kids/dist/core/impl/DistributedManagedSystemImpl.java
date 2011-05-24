@@ -247,7 +247,6 @@ public class DistributedManagedSystemImpl implements DistributedManagedSystem {
 				synchronized (finished) {
 					finished.notify();
 				}
-				System.out.println("Finished!");
 			} else {
 				int index = rand.nextInt(n);
 				for (Iterator<Object> iter = monitors.values().iterator(); iter.hasNext();) {
