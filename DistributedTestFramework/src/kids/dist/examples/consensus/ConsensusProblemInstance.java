@@ -32,7 +32,7 @@ public class ConsensusProblemInstance extends DefaultProblemInstance<Consensus> 
 			@Override
 			public TesterVerdict test(DistributedManagedSystem system, Consensus solution) {
 				if (deadNodeCountdown.decrementAndGet() < 0)
-					system.setTimebombForThisThread(6);
+					system.setTimebombForThisThread(60);
 				
 				system.handleMessages();
 				int myProposal = stigaoDo.incrementAndGet();
