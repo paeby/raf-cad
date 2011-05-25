@@ -22,6 +22,7 @@ public class ProblemTester {
 		return testProblem(problem, solutionClass, factory, n, false, false);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static <S extends Solution> boolean testProblem(ProblemInstance<S> problem, Class<? extends S> solutionClass, DistNetworkFactory factory, int n, boolean useFifoQueues, boolean allowMessagesToAnyone) {
 		ExecutorService executor = Executors.newCachedThreadPool(new NamedThreadFactory("workers"));
 		RandomizableProblemInstance<S> randomizableProblemInstance = ((problem instanceof RandomizableProblemInstance) ? (RandomizableProblemInstance<S>) problem : null);
