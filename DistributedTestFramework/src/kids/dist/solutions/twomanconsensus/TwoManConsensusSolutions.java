@@ -1,6 +1,7 @@
 package kids.dist.solutions.twomanconsensus;
 
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
 
 import kids.dist.common.DistributedSystem;
 import kids.dist.examples.twomanconsensus.TwoManConsensus;
@@ -10,45 +11,47 @@ public class TwoManConsensusSolutions {
 	public static class DummyTwoManConsensus implements TwoManConsensus {
 		DistributedSystem system;
 		Integer value = null;
-		
+
 		@Override
 		public int propose(int proposedValue) {
 			if (value == null) {
 				value = proposedValue;
-				system.sendMessage(system.getProcessNeighbourhood()[0], 0, proposedValue);
+				system.sendMessage(system.getProcessNeighbourhood()[0], 0,
+						proposedValue);
 			}
 			return value;
 		}
-		
+
 		@Override
 		public void messageReceived(int from, int type, Object message) {
 			if (value == null)
 				value = (Integer) message;
 		}
 	}
-	
+
 	public static class CoinflipTwoManConsensus implements TwoManConsensus {
-		
+
 		DistributedSystem system;
 		Integer myValue = null, otherValue = null, myProposal;
 		Random random = new Random();
-		
+
 		@Override
 		public int propose(int proposedValue) {
 			if (myValue != null)
 				return myValue;
-			
+
 			myValue = proposedValue;
 			myProposal = myValue;
-			
-			system.sendMessage(system.getProcessNeighbourhood()[0], 0, proposedValue);
+
+			system.sendMessage(system.getProcessNeighbourhood()[0], 0,
+					proposedValue);
 			while (otherValue == null)
 				system.yield();
 			while (myValue != otherValue)
 				system.yield();
 			return myValue;
 		}
-		
+
 		@Override
 		public void messageReceived(int from, int type, Object message) {
 			if (myValue == null) {
@@ -67,8 +70,29 @@ public class TwoManConsensusSolutions {
 			}
 		}
 	}
-	
+
+	public static class CheatingTwoManConsensus implements TwoManConsensus {
+
+		static final AtomicReference<Integer> agreedValue = new AtomicReference<Integer>(
+				null);
+
+		@Override
+		public int propose(int proposedValue) {
+			if (agreedValue.get() == null) {
+				agreedValue.set(proposedValue);
+				return proposedValue;
+			} else {
+				return agreedValue.getAndSet(null);
+			}
+		}
+
+		@Override
+		public void messageReceived(int from, int type, Object message) {
+		}
+	}
+
 	public static void main(String[] args) {
-		TwoManConsensusTester.testTwoManConsensus(CoinflipTwoManConsensus.class);
+		TwoManConsensusTester
+				.testTwoManConsensus(CheatingTwoManConsensus.class);
 	}
 }
