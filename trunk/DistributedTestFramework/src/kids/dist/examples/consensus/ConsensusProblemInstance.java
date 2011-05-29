@@ -10,9 +10,15 @@ import kids.dist.core.impl.problem.TesterVerdict;
 
 public class ConsensusProblemInstance extends DefaultProblemInstance<Consensus> implements RandomizableProblemInstance<Consensus> {
 	final int numberOfDeadOnes;
+	final int timebomb;
 	
 	public ConsensusProblemInstance(int numberOfDeadones) {
+		this(numberOfDeadones, 20);
+	}
+	
+	public ConsensusProblemInstance(int numberOfDeadones, int timebomb) {
 		this.numberOfDeadOnes = numberOfDeadones;
+		this.timebomb = timebomb;
 	}
 	
 	final AtomicInteger stigaoDo = new AtomicInteger(0);
@@ -32,7 +38,7 @@ public class ConsensusProblemInstance extends DefaultProblemInstance<Consensus> 
 			@Override
 			public TesterVerdict test(DistributedManagedSystem system, Consensus solution) {
 				if (deadNodeCountdown.decrementAndGet() < 0)
-					system.setTimebombForThisThread(60);
+					system.setTimebombForThisThread(timebomb);
 				
 				system.handleMessages();
 				int myProposal = stigaoDo.incrementAndGet();
