@@ -20,8 +20,17 @@ public class ConsensusTester {
 	}
 	
 	public static void testConsensusWithCrashes(Class<? extends Consensus> solutionClass) {
-		System.out.println("Testing consensus with crashes..");
-		if (!ProblemTester.testProblem(new ConsensusProblemInstance(2), solutionClass, new CliqueDistNetwork.Factory(20), 200))
+		System.out.println("Testing consensus with crashes, long timeout before crash..");
+		if (!ProblemTester.testProblem(new ConsensusProblemInstance(2, 100), solutionClass, new CliqueDistNetwork.Factory(20), 200))
+			return;
+		System.out.println("Testing consensus with crashes, medium timeout before crash..");
+		if (!ProblemTester.testProblem(new ConsensusProblemInstance(2, 20), solutionClass, new CliqueDistNetwork.Factory(20), 200))
+			return;
+		System.out.println("Testing consensus with crashes, short timeout before crash..");
+		if (!ProblemTester.testProblem(new ConsensusProblemInstance(2, 2), solutionClass, new CliqueDistNetwork.Factory(20), 200))
+			return;
+		System.out.println("Testing consensus with crashes, immediate crash..");
+		if (!ProblemTester.testProblem(new ConsensusProblemInstance(2, 0), solutionClass, new CliqueDistNetwork.Factory(20), 200))
 			return;
 		System.out.println("All good!");
 	}
