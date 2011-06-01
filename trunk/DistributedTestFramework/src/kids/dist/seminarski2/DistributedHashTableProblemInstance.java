@@ -18,14 +18,17 @@ public class DistributedHashTableProblemInstance extends DefaultProblemInstance<
 	final DHTElement[] dhtElements;
 	final boolean allowOverwrites, allowCrashes;
 	volatile int dyingIndex;
+	final int maxCount;
+	final int numberOfThreads;
 	
-	public DistributedHashTableProblemInstance(boolean allowOverwrites, boolean allowCrashes) {
-		super();
+	public DistributedHashTableProblemInstance(int maxCount, int numberOfThreads, boolean allowOverwrites, boolean allowCrashes) {
 		this.allowOverwrites = allowOverwrites;
 		this.allowCrashes = allowCrashes;
+		this.maxCount = maxCount;
+		this.numberOfThreads = numberOfThreads;
 		
-		this.dhtElements = new DHTElement[256];
-		for (int i = 0; i < 256; i++)
+		this.dhtElements = new DHTElement[maxCount];
+		for (int i = 0; i < maxCount; i++)
 			this.dhtElements[i] = new DHTElement(i);
 	}
 	
@@ -69,7 +72,7 @@ public class DistributedHashTableProblemInstance extends DefaultProblemInstance<
 				DHTElement element = null;
 				try {
 					do {
-						element = dhtElements[(int) (Math.random() * 256)];
+						element = dhtElements[(int) (Math.random() * maxCount)];
 					} while (!element.workingIndices.isEmpty());
 					element.workingIndices.add(threadIndex);
 					
@@ -84,6 +87,8 @@ public class DistributedHashTableProblemInstance extends DefaultProblemInstance<
 						for (Object possibility : element.possibleObjects)
 							if (possibility == result) {
 								found = true;
+								element.possibleObjects.clear();
+								element.possibleObjects.add(result);
 								break;
 							}
 						if (!found) {
@@ -114,7 +119,7 @@ public class DistributedHashTableProblemInstance extends DefaultProblemInstance<
 			TesterVerdict testPut(DistributedManagedSystem system, DistributedHashTable solution) {
 				DHTElement element = null;
 				try {
-					element = dhtElements[(int) (Math.random() * 256)];
+					element = dhtElements[(int) (Math.random() * maxCount)];
 					
 					if (element.workingIndices.isEmpty())
 						element.workingIndices.add(threadIndex);
