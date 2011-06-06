@@ -2,6 +2,12 @@ package examples.stack;
 
 import core.impl.problem.ProblemTester;
 
+/**
+ * Nije dobar test
+ * @author Bocete
+ *
+ */
+@Deprecated
 public class StackTester {
 	
 	public static void testStack(Stack lifo) {

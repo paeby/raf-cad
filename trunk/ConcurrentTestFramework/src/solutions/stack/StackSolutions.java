@@ -9,6 +9,12 @@ import common.ProcessInfo;
 import examples.stack.Stack;
 import examples.stack.StackTester;
 
+/**
+ * Test nije dobar
+ * @author Bocete
+ *
+ */
+@Deprecated
 public class StackSolutions {
 	public static class NonWorkingStack implements Stack {
 
