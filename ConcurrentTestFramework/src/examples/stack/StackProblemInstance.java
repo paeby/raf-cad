@@ -13,6 +13,12 @@ import common.tasks.Task;
 
 import core.ConcurrentManagedSystem;
 
+/**
+ * nije dobar test
+ * @author Bocete
+ *
+ */
+@Deprecated
 public class StackProblemInstance implements ProblemInstance<Stack> {
 	private final int howManyOperations, howManyProcesses;
 	private final boolean addThenRemove;
