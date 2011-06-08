@@ -110,7 +110,6 @@ public class ReadersWriterLockFixedProblemInstance implements ProblemInstance<Re
 			});
 		}
 		managedSystem.startSimAndWaitToFinish();
-		System.out.print(maxReaders);
 		return correct.get();
 	}
 	
