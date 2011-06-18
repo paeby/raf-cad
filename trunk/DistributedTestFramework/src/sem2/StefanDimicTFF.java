@@ -11,17 +11,19 @@ public class StefanDimicTFF implements DistributedHashTable, InitiableSolution {
 	private DistributedSystem system;
 	private HashMap<Integer, Object> map;
 
-	private boolean putConfirmationSent;
+	private boolean putConfirmationArrived;
 
-	private HashMap<Integer, Object> recieved;
+	private HashMap<Integer, Object> receivedData;
+	
+	int waittime = 200;
 
 	@Override
 	public void initialize() {
 		map = new HashMap<Integer, Object>();
-		recieved = new HashMap<Integer, Object>();
+		receivedData = new HashMap<Integer, Object>();
 	}
 
-	private int findObjectHolder(int hash) {
+	private int getDataHolder(int hash) {
 		int[] neighbourhood = system.getProcessNeighbourhood();
 		int[] neighbourhoodAndMe = new int[neighbourhood.length + 1];
 		neighbourhoodAndMe[0] = system.getProcessId();
@@ -36,35 +38,75 @@ public class StefanDimicTFF implements DistributedHashTable, InitiableSolution {
 		return neighbourhoodAndMe[index];
 	}
 
-	@Override
-	public Object get(int hash) {
-		int holder = findObjectHolder(hash);
+	private void sendAndWaitGet(int to, int hash) {
+		system.sendMessage(to, 2, new Transport(hash, null));
+		long time = System.currentTimeMillis();
 
-		if (holder == system.getProcessId())
-			return map.get(hash);
-		else {
-			system.sendMessage(holder, 2, new Transport(hash, null));
-
-			while (!recieved.containsKey(hash))
-				system.yield();
-
-			return recieved.remove(hash);
+		while (!receivedData.containsKey(hash)) {
+			system.yield();
+			if (System.currentTimeMillis() - time > 200)
+				return;
 		}
 	}
 
 	@Override
+	public Object get(int hash) {
+		int holder = getDataHolder(hash);
+		int backup = holder ^ 0x01;
+		int myID = system.getProcessId();
+
+		if (holder == myID || backup == myID)
+			return map.get(hash);
+
+		else {
+			sendAndWaitGet(holder, hash);
+
+			if (receivedData.containsKey(hash))
+				return receivedData.remove(hash);
+
+			sendAndWaitGet(backup, hash);
+
+			if (receivedData.containsKey(hash))
+				return receivedData.remove(hash);
+
+			else
+				return null;
+		}
+	}
+
+	private void sendAndWaitPut(int to, int hash, Object object) {
+		system.sendMessage(to, 0, new Transport(hash, object));
+
+		long time = System.currentTimeMillis();
+
+		while (!putConfirmationArrived) {
+			system.yield();
+			if (System.currentTimeMillis() - time > 200)
+				break;
+		}
+		putConfirmationArrived = false;
+	}
+
+	@Override
 	public void put(int hash, Object object) {
-		int holder = findObjectHolder(hash);
+		int holder = getDataHolder(hash);
+		int backup = holder ^ 0x01;
+		int myID = system.getProcessId();
 
-		if (holder == system.getProcessId()) {
+		putConfirmationArrived = false;
+
+		if (holder == myID) {
 			map.put(hash, object);
-		} else {
-			system.sendMessage(holder, 0, new Transport(hash, object));
+			sendAndWaitPut(backup, hash, object);
 
-			while (!putConfirmationSent)
-				system.yield();
+		} else if (backup == myID) {
+			map.put(hash, object);
+			sendAndWaitPut(holder, hash, object);
+		}
 
-			putConfirmationSent = false;
+		else {
+			sendAndWaitPut(holder, hash, object);
+			sendAndWaitPut(backup, hash, object);
 		}
 	}
 
@@ -77,27 +119,25 @@ public class StefanDimicTFF implements DistributedHashTable, InitiableSolution {
 		switch (type) {
 		case 0:
 			Transport t = (Transport) message;
-			put(t.hash, t.data);
+			map.put(t.hash, t.data);
 
 			system.sendMessage(from, 1, null);
 			break;
 
 		case 1:
-			putConfirmationSent = true;
+			putConfirmationArrived = true;
 			break;
 
 		case 2:
 			Transport transport = (Transport) message;
-			transport.data = get(transport.hash);
-			// Transport temp = new Transport(transport.hash,
-			// get(transport.hash));
+			Transport temp = new Transport(transport.hash, get(transport.hash));
 
-			system.sendMessage(from, 3, transport);
+			system.sendMessage(from, 3, temp);
 			break;
 
 		case 3:
 			Transport tr = (Transport) message;
-			recieved.put(tr.hash, tr.data);
+			receivedData.put(tr.hash, tr.data);
 			break;
 		}
 	}
@@ -113,6 +153,9 @@ public class StefanDimicTFF implements DistributedHashTable, InitiableSolution {
 	}
 
 	public static void main(String[] args) {
-		DistributedHashTableTester.testDHT(StefanDimicTFF.class, true, false, false);
+		 DistributedHashTableTester.testDHT(StefanDimicTFF.class, true, false,
+		 true);
+//		DistributedHashTableTester.testDHT(StefanDimicTFF.class, 8, 4, true,
+//				false, true);
 	}
 }
