@@ -9,7 +9,7 @@ import kids.dist.seminarski2.DistributedHashTable;
 //Srdjan Delic 19/05
 import kids.dist.seminarski2.DistributedHashTableTester;
 
-public class SrdjanDelic implements InitiableSolution, DistributedHashTable{
+public class SrdjanDelicTFT implements InitiableSolution, DistributedHashTable{
 	DistributedSystem system;
 	int[] svi=null;
 	Object vrednost;
@@ -122,7 +122,7 @@ public class SrdjanDelic implements InitiableSolution, DistributedHashTable{
 	}
 	
 	public static void main(String[] args) {
-		DistributedHashTableTester.testDHT(SrdjanDelic.class, true, false, true);
+		DistributedHashTableTester.testDHT(SrdjanDelicTFT.class, true, false, true);
 	}
 
 } 

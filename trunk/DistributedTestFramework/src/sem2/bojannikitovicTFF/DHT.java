@@ -1,4 +1,4 @@
-package sem2.bojannikitovic;
+package sem2.bojannikitovicTFF;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,7 +62,7 @@ public class DHT implements DistributedHashTable, InitiableSolution
 		
 		Message message = new Message(hashCode, object, system.getProcessId());
 
-		if (nodeIndex == this.index)
+		if (nodeIndex != this.index)
 		{
 			if (nodeIndex >= this.index)
 				nodeIndex -= 1;
