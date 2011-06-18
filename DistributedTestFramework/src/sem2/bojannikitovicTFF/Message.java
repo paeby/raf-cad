@@ -1,4 +1,4 @@
-package sem2.bojannikitovic;
+package sem2.bojannikitovicTFF;
 
 public class Message
 {

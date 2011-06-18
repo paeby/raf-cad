@@ -1,4 +1,4 @@
-package sem2.damirtrhulj;
+package sem2.damirtrhuljTFT;
 import kids.dist.seminarski2.DistributedHashTableTester;
 
 

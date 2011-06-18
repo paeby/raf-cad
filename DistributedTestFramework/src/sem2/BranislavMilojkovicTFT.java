@@ -11,7 +11,7 @@ import kids.dist.seminarski2.DistributedHashTable;
 import kids.dist.seminarski2.DistributedHashTableTester;
 
 
-public class BranislavMilojkovic implements DistributedHashTable, InitiableSolution {
+public class BranislavMilojkovicTFT implements DistributedHashTable, InitiableSolution {
 
 	private class PutRequest {
 		private int requester;
@@ -63,7 +63,7 @@ public class BranislavMilojkovic implements DistributedHashTable, InitiableSolut
 	@Override
 	public void initialize() {
 		values = new Object[SIZE];
-		putRequestQueueMap = new HashMap<Integer, List<BranislavMilojkovic.PutRequest>>();
+		putRequestQueueMap = new HashMap<Integer, List<BranislavMilojkovicTFT.PutRequest>>();
 		backupDone = true;
 		waitForPut = new boolean[SIZE];
 		
@@ -260,6 +260,6 @@ public class BranislavMilojkovic implements DistributedHashTable, InitiableSolut
 	}
 	
 	public static void main(String[] args) {
-		DistributedHashTableTester.testDHT(BranislavMilojkovic.class, true, false, true);
+		DistributedHashTableTester.testDHT(BranislavMilojkovicTFT.class, true, false, true);
 	}
 }
